@@ -94,6 +94,18 @@ def get_products():
     return [dict(row) for row in rows]
 
 
+@app.get("/products/search")
+def search_products(q: str = ""):
+    conn = get_connection()
+    escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    rows = conn.execute(
+        "SELECT id, name, price, stock FROM products WHERE name LIKE ? ESCAPE '\\'",
+        (f"%{escaped}%",),
+    ).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
 @app.get("/products/{id}")
 def get_product(id: int):
     conn = get_connection()
