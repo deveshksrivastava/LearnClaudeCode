@@ -1,8 +1,9 @@
+import hashlib
 import sqlite3
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 app = FastAPI()
 
@@ -49,6 +50,14 @@ def init_db():
             quantity   INTEGER NOT NULL
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            name     TEXT    NOT NULL,
+            email    TEXT    NOT NULL UNIQUE,
+            password TEXT    NOT NULL
+        )
+    """)
     if conn.execute("SELECT COUNT(*) FROM products").fetchone()[0] == 0:
         conn.executemany(
             "INSERT INTO products (id, name, price, stock) VALUES (?, ?, ?, ?)",
@@ -74,6 +83,12 @@ class Product(BaseModel):
 class CartItem(BaseModel):
     product_id: int
     quantity: int
+
+
+class UserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
 
 
 @app.get("/")
@@ -197,5 +212,79 @@ def remove_from_cart(product_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="Product not in cart")
     conn.execute("DELETE FROM cart_items WHERE product_id = ?", (product_id,))
+    conn.commit()
+    conn.close()
+
+
+class UserUpdate(BaseModel):
+    name: str
+    email: EmailStr
+
+
+@app.post("/register", status_code=201)
+def register(user: UserRegister):
+    hashed = hashlib.sha256(user.password.encode()).hexdigest()
+    conn = get_connection()
+    existing = conn.execute(
+        "SELECT id FROM users WHERE email = ?", (user.email,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Email already registered")
+    cursor = conn.execute(
+        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+        (user.name, user.email, hashed),
+    )
+    new_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return {"id": new_id, "name": user.name, "email": user.email}
+
+
+@app.get("/users")
+def list_users(q: str = ""):
+    conn = get_connection()
+    if q:
+        escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        rows = conn.execute(
+            "SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ESCAPE '\\'",
+            (f"%{escaped}%", f"%{escaped}%"),
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT id, name, email FROM users").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+@app.put("/users/{user_id}")
+def update_user(user_id: int, data: UserUpdate):
+    conn = get_connection()
+    row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    conflict = conn.execute(
+        "SELECT id FROM users WHERE email = ? AND id != ?", (data.email, user_id)
+    ).fetchone()
+    if conflict:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Email already in use")
+    conn.execute(
+        "UPDATE users SET name = ?, email = ? WHERE id = ?",
+        (data.name, data.email, user_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"id": user_id, "name": data.name, "email": data.email}
+
+
+@app.delete("/users/{user_id}", status_code=204)
+def delete_user(user_id: int):
+    conn = get_connection()
+    row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
         <p className="login-footer">
           Don't have an account?{' '}
-          <a href="#" className="signup-link">Create one</a>
+          <Link to="/register" className="signup-link">Create one</Link>
         </p>
       </div>
     </div>

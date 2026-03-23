@@ -4,6 +4,9 @@ import NavBar from './components/NavBar';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import UsersPage from './pages/UsersPage';
+import DashboardPage from './pages/DashboardPage';
 import { fetchCart } from './api/cart';
 
 export default function App() {
@@ -18,8 +21,11 @@ export default function App() {
       <NavBar cartCount={cartCount} />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<ProductsPage onCartChange={refreshCartCount} />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/users" element={<UsersPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     </BrowserRouter>
   );
