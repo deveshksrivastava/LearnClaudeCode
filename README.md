@@ -45,7 +45,20 @@ LearnClaudeCode/
 - Python 3.9+
 - Node.js 18+
 
-### Backend Setup
+
+### Backend Setup with UV 
+```
+ uv --version
+ uv init - this create .toml project file
+ uv venv - this will create.env project
+ .venv/Scripts/activate - activate enviornment
+ now add file requirement.txt and update the package
+ uv add -r requirements.txt
+ uv add <<library-name>>
+```
+
+
+### Backend Setup with PIP
 
 ```bash
 # Install Python dependencies
