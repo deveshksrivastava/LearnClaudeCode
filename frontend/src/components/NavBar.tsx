@@ -9,6 +9,7 @@ export default function NavBar({ cartCount }: Props) {
     <nav className="navbar">
       <Link to="/" className="nav-brand">ShopFast</Link>
       <div className="nav-links">
+        <Link to="/chat" className="nav-link">Chat</Link>
         <Link to="/users" className="nav-link">Users</Link>
         <Link to="/cart" className="nav-cart">
           Cart{cartCount > 0 && <span className="cart-badge">{cartCount}</span>}

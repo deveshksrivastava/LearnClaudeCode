@@ -51,12 +51,37 @@ LearnClaudeCode/
 # Install Python dependencies
 pip install fastapi uvicorn
 
-# Run the development server (auto-reloads on changes)
+# 1. Activate the virtual environment
+source .venv/Scripts/activate        # Git Bash
+# OR
+.venv\Scripts\activate               # PowerShell / CMD
+
+# 2. Install dependencies (first time only)
+pip install -r requirements.txt
+
+# 3. Start the server
 uvicorn main:app --reload
+
+If you get the "port already in use" error, port 8000 has a stale process. Fix it with one of these:
+
+Option A — use a different port:
+uvicorn main:app --reload --port 8080
+
+Option B — kill whatever is on 8000 (run in PowerShell as Admin):
+# Find the PID
+netstat -ano | findstr :8000
+
+# Kill it (replace 12345 with the actual PID)
+Stop-Process -Id 12345 -Force
+
+Option C — one-liner to free port 8000 (PowerShell):
+Get-NetTCPConnection -LocalPort 8000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
 ```
 
 API runs at: **http://127.0.0.1:8000**
 Interactive docs: **http://127.0.0.1:8000/docs**
+
+
 
 ### Frontend Setup
 
