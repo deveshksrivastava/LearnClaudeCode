@@ -100,11 +100,39 @@ Frontend runs at: **http://localhost:5173**
 ### Run Both Servers Together
 
 ```bash
-cd frontend
-npm run dev:all
+# cd frontend
+# npm run dev:all
+npm run dev
+# uvicorn app.main:app --reload
+# npm run de
 ```
 
 ---
+
+# Backend API
+
+```
+app/
+├── __init__.py
+├── main.py              ← FastAPI app factory, middleware, router registration
+├── core/
+│   ├── config.py        ← env var settings (DB_PATH, CHAT_DEPLOYMENT)
+│   └── database.py      ← get_connection(), init_db(), CartShim
+├── models/
+│   ├── product.py       ← Product
+│   ├── cart.py          ← CartItem
+│   ├── user.py          ← UserRegister, UserUpdate
+│   └── chat.py          ← ChatRequest
+├── routers/
+│   ├── products.py      ← GET/POST /products
+│   ├── cart.py          ← GET/POST/DELETE /cart
+│   ├── users.py         ← /register, /users CRUD
+│   └── chat.py          ← /chat, /chat/session, /chat/history
+└── services/
+    └── ai.py            ← get_ai_client() (Azure / OpenAI factory)
+
+main.py  ← thin root shim: re-exports `app` and `cart` for backward compat
+```
 
 ## API Endpoints
 
