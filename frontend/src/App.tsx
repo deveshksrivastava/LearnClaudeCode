@@ -13,18 +13,30 @@ import { fetchCart } from './api/cart';
 
 export default function App() {
   const [cartCount, setCartCount] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('isLoggedIn'));
 
   const refreshCartCount = useCallback(() => {
     fetchCart().then((cart) => setCartCount(cart.items.length));
   }, []);
 
+  const handleLogin = () => {
+    localStorage.setItem('isLoggedIn', 'true');
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+  };
+
   return (
     <BrowserRouter>
-      <NavBar cartCount={cartCount} />
+      <NavBar cartCount={cartCount} isLoggedIn={isLoggedIn} onLogout={handleLogout} />
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<FixLayout />} />
+        {/* <Route path="/" element={<FixLayout />} /> */}
+        <Route path="/" element={<DashboardPage />} />
         <Route path="/products" element={<ProductsPage onCartChange={refreshCartCount} />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/users" element={<UsersPage />} />
