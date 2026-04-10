@@ -32,10 +32,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <NavBar cartCount={cartCount} isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+      <div className="flex flex-col flex-1 min-h-0">
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/register" element={<RegisterPage />} />
         {/* <Route path="/" element={<FixLayout />} /> */}
+
+        
         <Route path="/" element={<DashboardPage />} />
         <Route path="/products" element={<ProductsPage onCartChange={refreshCartCount} />} />
         <Route path="/cart" element={<CartPage />} />
@@ -43,6 +46,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/chat" element={<ChatbotPage />} />
       </Routes>
+      </div>
     </BrowserRouter>
   );
 }

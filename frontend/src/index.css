@@ -1,31 +1,60 @@
 @import "tailwindcss";
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ── Tailwind v4 source paths ──────────────────────────────────────────────
+   The @tailwindcss/vite plugin auto-scans imports, but @source makes it
+   explicit so no file is ever missed.
+   ─────────────────────────────────────────────────────────────────────── */
+@source "./src/**/*.{ts,tsx}";
 
-:root {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  font-size: 16px;
-  color: #1a1a1a;
-  background: #f5f5f5;
-}
+/* ── Safelist: dynamic classes built from data in DashboardPage ────────────
+   Tailwind can't see classes that are assembled at runtime via template
+   literals (e.g. `${project.iconBg}`).  @source inline() forces them into
+   the generated stylesheet regardless of scan results.
+   ─────────────────────────────────────────────────────────────────────── */
+@source inline("bg-indigo-100 text-indigo-600 hover:border-indigo-300");
+@source inline("bg-emerald-100 text-emerald-600 hover:border-emerald-300");
+@source inline("bg-sky-100 text-sky-600 hover:border-sky-300");
+@source inline("bg-orange-100 text-orange-600 hover:border-orange-300");
+@source inline("bg-pink-100 text-pink-600 hover:border-pink-300");
+@source inline("bg-violet-100 text-violet-600 hover:border-violet-300");
+@source inline("bg-yellow-100 text-yellow-700");
+@source inline("bg-blue-100 text-blue-700");
+@source inline("bg-green-100 text-green-700");
+@source inline("bg-gray-100 text-gray-600");
 
-body {
-  min-height: 100vh;
-}
+/* ── Base layer — placed inside @layer base so Tailwind utility classes
+   (which live in @layer utilities) can always override these resets.
+   Unlayered CSS beats @layer utilities in the cascade, so without this
+   wrapper every p-*, m-*, and text-color utility would be silently ignored.
+   ─────────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+  :root {
+    font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    color: #1a1a1a;
+    background: #f5f5f5;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
+  body {
+    min-height: 100vh;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 /* Navbar */
