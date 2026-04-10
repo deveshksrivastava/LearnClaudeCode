@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
-import ChatPage from './pages/ChatPage';
+import ChatbotPage from './pages/ChatbotPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UsersPage from './pages/UsersPage';
@@ -41,7 +41,7 @@ export default function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat" element={<ChatbotPage />} />
       </Routes>
     </BrowserRouter>
   );
