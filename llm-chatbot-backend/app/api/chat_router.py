@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # WHAT IS THIS FILE?
 # This file defines the main chat endpoint and the document indexing endpoint.
-# POST /api/v1/chat  → runs the LangGraph conversation graph and returns a response
+# POST /api/v1/chat-llm  → runs the LangGraph conversation graph and returns a response
 # POST /api/v1/index → loads documents from a folder into ChromaDB
 #
 # FastAPI routers keep endpoint logic separated by feature area.
@@ -17,7 +17,7 @@ from app.rag.document_loader import load_documents_from_directory
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1", tags=["chat"])
+router = APIRouter(prefix="/api/v1", tags=["chat-llm"])
 
 # In-memory session store: maps session_id → list of message dicts
 # WHY IN-MEMORY? Simple and fast for demonstrations.
@@ -27,7 +27,7 @@ _session_store: dict[str, list[dict]] = {}
 
 
 @router.post(
-    "/chat",
+    "/chat-llm",
     response_model=ChatResponse,
     status_code=status.HTTP_200_OK,
     summary="Send a chat message",
@@ -42,7 +42,7 @@ async def chat(
     settings: Settings = Depends(get_settings),
 ) -> ChatResponse:
     """
-    POST /api/v1/chat — main chat endpoint.
+    POST /api/v1/chat-llm — main chat endpoint.
 
     HOW THIS WORKS:
       1. Look up (or create) the session's message history
@@ -69,7 +69,7 @@ async def chat(
     session_id = request_body.session_id
     user_message = request_body.message
 
-    logger.info(f"POST /chat — session='{session_id}', message='{user_message[:60]}'")
+    logger.info(f"POST /chat-llm — session='{session_id}', message='{user_message[:60]}'")
 
     # Retrieve the compiled graph from app state (set during startup in main.py)
     compiled_graph = getattr(request.app.state, "compiled_graph", None)

@@ -4,6 +4,7 @@ import NavBar from './components/NavBar';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
 import ChatbotPage from './pages/ChatbotPage';
+import LLMChatPage from './pages/LLMChatPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UsersPage from './pages/UsersPage';
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/cart" element={<ProtectedRoute isLoggedIn={isLoggedIn}><CartPage /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute isLoggedIn={isLoggedIn}><UsersPage /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute isLoggedIn={isLoggedIn}><ChatbotPage /></ProtectedRoute>} />
+        <Route path="/llm-chat" element={<ProtectedRoute isLoggedIn={isLoggedIn}><LLMChatPage /></ProtectedRoute>} />
       </Routes>
       </div>
     </BrowserRouter>

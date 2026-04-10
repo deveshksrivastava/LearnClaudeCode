@@ -11,11 +11,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 
-# ── /api/v1/chat ────────────────────────────────────────────────────────────
+# ── /api/v1/chat-llm ────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     """
-    Request body for POST /api/v1/chat.
+    Request body for POST /api/v1/chat-llm.
 
     Fields:
         session_id: A unique string that identifies this conversation.
@@ -41,7 +41,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     """
-    Response body for POST /api/v1/chat.
+    Response body for POST /api/v1/chat-llm.
 
     Fields:
         session_id: Echoed back so the client knows which session this belongs to.

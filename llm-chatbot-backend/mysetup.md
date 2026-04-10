@@ -40,7 +40,7 @@
   ```
   curl -X POST http://localhost:8000/api/v1/index -H "Content-Type: application/json" -d '{"directory":
   "./data/sample_docs"}'
-  curl -X POST http://localhost:8000/api/v1/chat -H "Content-Type: application/json" -d '{"session_id": "s1",
+  curl -X POST http://localhost:8000/api/v1/chat-llm -H "Content-Type: application/json" -d '{"session_id": "s1",
   "message": "What is the return policy?"}'
   ```
   

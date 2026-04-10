@@ -292,7 +292,7 @@ sequenceDiagram
     participant LLM as OpenAI / Azure OpenAI
     participant N5 as format_response node
 
-    U->>API: POST /api/v1/chat<br/>{"session_id": "x", "message": "What is the return policy?"}
+    U->>API: POST /api/v1/chat-llm<br/>{"session_id": "x", "message": "What is the return policy?"}
     API->>G: run_conversation_graph(session_id, user_input, history)
     G->>N1: invoke state
     N1-->>G: validate message, return {error: None}
@@ -379,7 +379,7 @@ Expected response:
 ### Step 6: Chat with the Bot
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/chat \
+curl -X POST http://localhost:8000/api/v1/chat-llm \
   -H "Content-Type: application/json" \
   -d '{"session_id": "my-session-1", "message": "What is the return policy?"}'
 ```

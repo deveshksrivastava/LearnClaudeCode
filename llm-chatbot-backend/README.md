@@ -27,7 +27,7 @@ Visit `http://localhost:8000/docs` for the interactive API explorer.
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/v1/health` | Health check |
-| `POST` | `/api/v1/chat` | Send a chat message |
+| `POST` | `/api/v1/chat-llm` | Send a chat message |
 | `POST` | `/api/v1/index` | Index documents into ChromaDB |
 
 ### Example: Chat
@@ -39,7 +39,7 @@ curl -X POST http://localhost:8000/api/v1/index \
   -d '{"directory": "./data/sample_docs"}'
 
 # Then chat
-curl -X POST http://localhost:8000/api/v1/chat \
+curl -X POST http://localhost:8000/api/v1/chat-llm \
   -H "Content-Type: application/json" \
   -d '{"session_id": "user-1", "message": "What is the return policy?"}'
 ```

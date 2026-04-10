@@ -1,4 +1,4 @@
-const CHATBOT_URL = 'http://127.0.0.1:8001';
+const CHATBOT_URL = 'http://127.0.0.1:8002';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -25,7 +25,7 @@ export async function sendMessage(
   message: string,
   sessionId: string,
 ): Promise<ChatResponse> {
-  const res = await fetch(`${CHATBOT_URL}/api/v1/chat`, {
+  const res = await fetch(`${CHATBOT_URL}/api/v1/chat-llm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, session_id: sessionId }),

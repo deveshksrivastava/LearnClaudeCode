@@ -44,7 +44,7 @@ class TestHealthEndpoint:
 
 
 class TestChatEndpoint:
-    """Tests for POST /api/v1/chat."""
+    """Tests for POST /api/v1/chat-llm."""
 
     def test_chat_returns_200_with_valid_request(self, test_client):
         """
@@ -52,7 +52,7 @@ class TestChatEndpoint:
         WHY:  This is the main success path — the most important test.
         """
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={
                 "session_id": "test-session-001",
                 "message": "Hello, how are you?",
@@ -67,7 +67,7 @@ class TestChatEndpoint:
               being present. Missing fields would break the frontend.
         """
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={
                 "session_id": "test-session-002",
                 "message": "What is the refund policy?",
@@ -86,7 +86,7 @@ class TestChatEndpoint:
         """
         session_id = "my-specific-session-xyz"
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={"session_id": session_id, "message": "Hello"},
         )
         data = response.json()
@@ -99,7 +99,7 @@ class TestChatEndpoint:
               return a 422, not a 500 internal server error.
         """
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={"session_id": "test-session"},  # 'message' is missing
         )
         assert response.status_code == 422
@@ -111,7 +111,7 @@ class TestChatEndpoint:
               The API must reject requests without it.
         """
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={"message": "Hello there"},  # 'session_id' is missing
         )
         assert response.status_code == 422
@@ -122,7 +122,7 @@ class TestChatEndpoint:
         WHY:  The Pydantic model has min_length=1, so empty strings are invalid.
         """
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={"session_id": "test", "message": ""},
         )
         assert response.status_code == 422
@@ -138,7 +138,7 @@ class TestChatEndpoint:
         test_client.app.state.compiled_graph = None
 
         response = test_client.post(
-            "/api/v1/chat",
+            "/api/v1/chat-llm",
             json={"session_id": "test", "message": "Hello"},
         )
         assert response.status_code == 503
