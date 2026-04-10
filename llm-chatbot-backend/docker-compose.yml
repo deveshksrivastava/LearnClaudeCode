@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WHAT IS THIS FILE?
+# docker-compose.yml defines a multi-container local development environment.
+# With one command (docker-compose up), it starts:
+#   - The FastAPI chatbot backend
+#   - ChromaDB as a standalone service (with its own port)
+#
+# WHY CHROMADB AS A SEPARATE SERVICE?
+#   In production, ChromaDB can run as a sidecar container with a persistent volume.
+#   Running it separately locally mirrors the production architecture.
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+
+  # ── ChromaDB vector database ────────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"   # Map container port 8000 → host port 8001 (avoids conflict with our API)
+    volumes:
+      # Persist ChromaDB data across container restarts
+      # "chroma_data" is a named Docker volume (managed by Docker)
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE        # Tells ChromaDB to write data to disk
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI chatbot backend ──────────────────────────────────────────────────
+  chatbot:
+    build:
+      context: .           # Build using the Dockerfile in the current directory
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"        # FastAPI accessible at http://localhost:8000
+    env_file:
+      - .env               # Load all env vars from your .env file
+    environment:
+      # Override ChromaDB path to use the server mode when using docker-compose
+      # (When running locally without docker-compose, ChromaDB uses PersistentClient)
+      - CHROMA_PERSIST_PATH=/app/chroma_data
+      - LOG_LEVEL=DEBUG    # More verbose logging during local development
+    volumes:
+      # Mount local chroma_data directory so data persists between docker-compose restarts
+      - ./chroma_data:/app/chroma_data
+      # Mount the data/sample_docs directory so you can add documents without rebuilding
+      - ./data:/app/data
+    depends_on:
+      chromadb:
+        condition: service_healthy   # Wait for ChromaDB to be healthy before starting
+    restart: unless-stopped          # Auto-restart if the container crashes
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s    # Give 60s for startup (model loading takes time)
+      retries: 3
+
+# ── Named volumes ──────────────────────────────────────────────────────────────
+# Docker manages these volumes — they persist even when containers are removed
+volumes:
+  chroma_data:
+    driver: local
