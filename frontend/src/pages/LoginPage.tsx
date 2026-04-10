@@ -20,7 +20,7 @@ export default function LoginPage({ onLogin }: Props) {
       return;
     }
     onLogin?.();
-    navigate('/');
+    navigate('/dashboard');
   };
 
   return (
