@@ -69,7 +69,7 @@ AZURE SUBSCRIPTION
 2. **User chats with bot:** Browser → Static Web Apps → llm-chatbot Container App → Azure OpenAI
 3. **Chatbot queries products:** llm-chatbot → ecommerce-api via internal Container Apps DNS (`http://ecommerce-api`) — no public internet hop
 4. **RAG retrieval:** llm-chatbot → ChromaDB (in-memory, same container process)
-5. **Secrets at startup:** Container Apps pull secrets from Key Vault via Managed Identity — no credentials in code or env files
+5. **Secrets at startup:** Container Apps pull secrets from Key Vault via Managed Identity — no credentials in code or env files ss
 
 ---
 
@@ -162,7 +162,7 @@ az containerapp create \
     AZURE_OPENAI_API_VERSION=2024-02-01 \
     AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002 \
     ECOMMERCE_API_URL=http://ecommerce-api \
-    CHROMA_PERSIST_PATH=":memory:" \
+    CHROMA_IN_MEMORY=true \
     LOG_LEVEL=INFO
 
 # 6. Azure Static Web Apps
@@ -196,7 +196,7 @@ az staticwebapp create \
 | `AZURE_OPENAI_API_VERSION` | `2024-02-01` |
 | `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | `text-embedding-ada-002` |
 | `ECOMMERCE_API_URL` | `http://ecommerce-api` (internal DNS) |
-| `CHROMA_PERSIST_PATH` | `:memory:` |
+| `CHROMA_IN_MEMORY` | `true` |
 | `LOG_LEVEL` | `INFO` |
 
 ### React Frontend (Vite build-time)
@@ -247,4 +247,4 @@ These changes to the existing codebase are needed before deployment:
 2. **Update CORS origins** in both `app/main.py` and `llm-chatbot-backend/app/main.py`
 3. **Add `frontend/.env.production`** with `VITE_*` API URLs pointing to Container Apps
 4. **Add `.github/workflows/deploy.yml`** — the GitHub Actions pipeline
-5. **Update `llm-chatbot-backend/app/config.py`** — support `:memory:` as `chroma_persist_path`
+5. **Update `llm-chatbot-backend/app/config.py`** — add `chroma_in_memory: bool` flag; update `rag/vector_store.py` to use `chromadb.EphemeralClient()` when `CHROMA_IN_MEMORY=true` instead of `PersistentClient()` (ChromaDB does not support `:memory:` as a path string — in-memory mode requires a different client class)
