@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const LLM_CHAT_URL = 'http://127.0.0.1:800ssds2/api/v1/chat-llm';
+const LLM_CHAT_URL = 'http://127.0.0.1:8002/api/v1/chat-llm';
 const SESSION_KEY = 'llm_chat_session_id';
 
 interface Message {

@@ -156,13 +156,19 @@ async def index_documents(
     directory = request_body.directory
     logger.info(f"POST /index — directory='{directory}'")
 
-    # Get the ChromaDB collection from app state
-    collection = getattr(request.app.state, "chroma_collection", None)
-    if collection is None:
+    # Always get a fresh collection reference from the client to avoid stale UUID errors
+    chroma_client = getattr(request.app.state, "chroma_client", None)
+    if chroma_client is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="ChromaDB is not ready. Check server logs.",
         )
+    collection = chroma_client.get_or_create_collection(
+        name=settings.chroma_collection_name,
+        metadata={"hnsw:space": "cosine"},
+    )
+    # Keep app.state in sync with the fresh reference
+    request.app.state.chroma_collection = collection
 
     try:
         indexed_count = load_documents_from_directory(

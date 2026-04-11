@@ -122,7 +122,7 @@ class Settings(BaseSettings):
 
     # ── RAG settings ───────────────────────────────────────────────────────
     rag_top_k: int = Field(
-        default=3,
+        default=6,
         description="How many document chunks to retrieve from ChromaDB per query",
     )
     rag_chunk_size: int = Field(

@@ -16,6 +16,7 @@
 import logging
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
@@ -26,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.llm.llm_provider import get_llm
+from app.rag.document_loader import load_documents_from_directory, SUPPORTED_EXTENSIONS
 from app.rag.vector_store import get_chroma_client, get_or_create_collection, build_vector_store_index
 from app.graph.graph_builder import build_conversation_graph
 from app.api import chat_router, health_router
@@ -83,17 +85,46 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.chroma_client = chroma_client      # Store for /index endpoint
         app.state.chroma_collection = collection
 
-        # Step 2: LlamaIndex — build index from existing ChromaDB data
+        # Step 2: Auto-sync data/sample_docs — index any files not yet in ChromaDB
+        # SAFE approach: never delete the collection object (keeps app.state reference valid).
+        # Instead, wipe entries via collection.delete() and re-index when new files are found.
+        # Use path relative to this file so it works regardless of CWD.
+        docs_dir = Path(__file__).parent.parent / "data" / "sample_docs"
+        if docs_dir.exists():
+            disk_files = {f.name for f in docs_dir.iterdir() if f.suffix in SUPPORTED_EXTENSIONS}
+            if disk_files:
+                indexed_files: set = set()
+                if collection.count() > 0:
+                    results = collection.get(include=["metadatas"])
+                    indexed_files = {
+                        m.get("file_name", "")
+                        for m in (results.get("metadatas") or [])
+                        if m
+                    }
+                new_files = disk_files - indexed_files
+                if new_files:
+                    logger.info(f"New documents detected: {new_files} — clearing and re-indexing from {docs_dir}")
+                    # Clear existing entries without touching the collection object itself
+                    if collection.count() > 0:
+                        all_ids = collection.get()["ids"]
+                        if all_ids:
+                            collection.delete(ids=all_ids)
+                    count = load_documents_from_directory(str(docs_dir), collection, settings)
+                    logger.info(f"Auto-indexed {count} document(s) from {docs_dir}")
+                else:
+                    logger.info(f"All {len(disk_files)} document(s) already indexed: {disk_files}")
+
+        # Step 3: LlamaIndex — build index from ChromaDB data (now includes all files)
         logger.info("Building LlamaIndex VectorStoreIndex...")
         index = build_vector_store_index(collection)
         app.state.vector_index = index               # May be None if no docs indexed yet
 
-        # Step 3: LLM — initialise the chat model
+        # Step 4: LLM — initialise the chat model
         logger.info("Initialising LLM client...")
         llm = get_llm(settings)
         app.state.llm = llm
 
-        # Step 4: LangGraph — build and compile the conversation graph
+        # Step 5: LangGraph — build and compile the conversation graph
         logger.info("Building LangGraph conversation graph...")
         compiled_graph = build_conversation_graph(
             llm=llm,

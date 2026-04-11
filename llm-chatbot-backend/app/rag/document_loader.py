@@ -110,7 +110,7 @@ def load_documents_from_directory(
         reader = SimpleDirectoryReader(
             input_dir=str(dir_path),
             required_exts=list(SUPPORTED_EXTENSIONS),
-            recursive=False,  # Don't recurse into sub-folders
+            recursive=True,  # Also index files in sub-folders
         )
         documents = reader.load_data()
         logger.info(f"Loaded {len(documents)} document(s) into LlamaIndex")
@@ -146,6 +146,6 @@ def _find_supported_files(dir_path: Path) -> List[Path]:
         List[Path]: List of file paths with supported extensions.
     """
     return [
-        f for f in dir_path.iterdir()
+        f for f in dir_path.rglob("*")
         if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
     ]
