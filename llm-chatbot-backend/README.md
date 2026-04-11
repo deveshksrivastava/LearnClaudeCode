@@ -110,3 +110,5 @@ All configuration is in `.env` (copy from `.env.example`). Key variables:
 | `LLM_TEMPERATURE` | 0.0–2.0, controls creativity |
 | `CHROMA_PERSIST_PATH` | Where ChromaDB stores data |
 | `RAG_TOP_K` | Number of chunks to retrieve per query |
+
+
