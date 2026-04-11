@@ -444,3 +444,45 @@ Only one set of credentials is needed. Azure takes priority if both are set.
 | Token-by-token streaming | Better perceived performance; user sees the answer forming in real time |
 | `session_id` generated server-side | Guarantees UUID quality; client just stores and replays it |
 | Both OpenAI and Azure OpenAI supported | Works in any environment without code changes |
+
+
+## How to do testing 
+```
+┌─────────────────────────────┬──────────────────────────────────────────────────────────────────────────┐  
+  │            File             │                               What changed                               │  
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤  
+  │                             │ 5 LangChain tools: search_products, list_all_products,                   │  
+  │ app/llm/tools.py (new)      │ get_product_details, view_cart, add_to_cart — each calls the e-commerce  │  
+  │                             │ API via httpx                                                            │  
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤  
+  │ app/graph/state.py          │ Added llm_response, tool_calls, tool_results fields to ConversationState │  
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤  
+  │                             │ make_call_llm_node now accepts tools and uses .bind_tools(); new         │  
+  │ app/graph/nodes.py          │ make_execute_tools_node executes tool calls and wraps results in         │  
+  │                             │ ToolMessage                                                              │  
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ app/graph/graph_builder.py  │ Pipeline now branches: after call_llm, if tool_calls are present it runs │
+  │                             │  execute_tools → call_llm (second pass) → format_response                │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ app/config.py               │ Added ecommerce_api_url setting (defaults to http://localhost:8000)      │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ app/main.py                 │ Initialises tools at startup with get_tools(settings.ecommerce_api_url), │
+  │                             │  passes them to the pipeline                                             │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ app/llm/prompt_templates.py │ System prompt updated to "ShopFast Assistant" — tells the LLM it has     │
+  │                             │ tools and when to use them                                               │
+  └─────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+```
+
+ ### To test it, start both services and try:
+  #### Terminal 1
+  `npm run dev:api       # e-commerce API on :8000`
+
+  #### Terminal 2
+  `npm run dev:chatbot   # LLM chatbot on :8002`
+
+  #### Then in the frontend LLM Chat page (or via curl):
+  - "What products do you sell?" → LLM calls list_all_products
+  - "Search for headphones" → LLM calls search_products("headphones")
+  - "Add product 1 to my cart" → LLM calls add_to_cart(1, 1)
+  - "What's in my cart?" → LLM calls view_cart

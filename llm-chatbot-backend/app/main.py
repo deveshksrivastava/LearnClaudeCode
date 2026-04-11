@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.llm.llm_provider import get_llm
+from app.llm.tools import get_tools
 from app.rag.document_loader import load_documents_from_directory, SUPPORTED_EXTENSIONS
 from app.rag.vector_store import get_chroma_client, get_or_create_collection, build_vector_store_index
 from app.graph.graph_builder import build_conversation_graph
@@ -124,12 +125,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         llm = get_llm(settings)
         app.state.llm = llm
 
-        # Step 5: LangGraph — build and compile the conversation graph
+        # Step 5: Tools — create the e-commerce tool functions for the agent
+        logger.info("Initialising e-commerce tools...")
+        tools = get_tools(ecommerce_base_url=settings.ecommerce_api_url)
+        app.state.tools = tools
+
+        # Step 6: LangGraph — build and compile the conversation graph (with tools)
         logger.info("Building LangGraph conversation graph...")
         compiled_graph = build_conversation_graph(
             llm=llm,
             index=index,
             settings=settings,
+            tools=tools,
         )
         app.state.compiled_graph = compiled_graph
 

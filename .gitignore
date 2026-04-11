@@ -4,7 +4,24 @@ __pycache__/
 .pytest_cache/
 *.db
 .env
+*.stackdump
+
+# Virtual environments
+.venv/
+venv/
+env/
 
 # Node
 node_modules/
 frontend/node_modules/
+
+# ChromaDB vector store data
+llm-chatbot-backend/chroma_data/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

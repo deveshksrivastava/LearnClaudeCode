@@ -120,6 +120,15 @@ class Settings(BaseSettings):
         description="Port the FastAPI server listens on",
     )
 
+    # ── Tool Calling ───────────────────────────────────────────────────────
+    ecommerce_api_url: str = Field(
+        default="http://localhost:8000",
+        description=(
+            "Base URL of the e-commerce API that the chatbot's tools will call. "
+            "Change this when deploying to a different environment."
+        ),
+    )
+
     # ── RAG settings ───────────────────────────────────────────────────────
     rag_top_k: int = Field(
         default=6,

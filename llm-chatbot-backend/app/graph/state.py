@@ -42,6 +42,18 @@ class ConversationState(TypedDict):
       error:             If any node encounters an error, it sets this field.
                          Other nodes check this field and can skip if there's an error.
                          None means "no error so far".
+
+      llm_response:      The raw AIMessage object returned by the LLM.
+                         May contain .tool_calls if the model wants to use a tool.
+                         Set by the call_llm node.
+
+      tool_calls:        List of tool call requests from the LLM (populated after
+                         call_llm if the model chose to use one or more tools).
+                         Each entry: {"name": str, "args": dict, "id": str}
+
+      tool_results:      List of ToolMessage objects containing the results after
+                         our code executed the tool calls (populated by execute_tools).
+                         These are fed back into the prompt for the second LLM call.
     """
     session_id: str
     messages: list[dict]
@@ -51,3 +63,6 @@ class ConversationState(TypedDict):
     built_prompt: Optional[list]
     final_response: str
     error: Optional[str]
+    llm_response: Optional[Any]
+    tool_calls: Optional[list]
+    tool_results: Optional[list]

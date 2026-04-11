@@ -14,7 +14,7 @@ import logging
 from typing import Optional
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 
 from app.graph.state import ConversationState
 from app.llm.prompt_templates import get_rag_prompt, get_simple_chat_prompt
@@ -200,58 +200,157 @@ def make_build_prompt_node():
     return build_prompt
 
 
-def make_call_llm_node(llm: BaseChatModel):
+def make_call_llm_node(llm: BaseChatModel, tools: Optional[list] = None):
     """
     Factory that returns the 'call_llm' node function.
 
+    TOOL CALLING:
+      If tools are provided, the LLM is bound to them via .bind_tools().
+      This means the model's response may include tool_calls — requests to
+      execute one of the provided functions before giving a final answer.
+      The execute_tools node handles those calls; this node just detects them.
+
     Args:
-        llm: A LangChain chat model (ChatOpenAI or AzureChatOpenAI).
+        llm:   A LangChain chat model (ChatOpenAI or AzureChatOpenAI).
+        tools: Optional list of LangChain @tool functions to make available.
 
     Returns:
         Callable: A node function with signature (ConversationState) -> dict.
     """
+    # Bind tools to the LLM once at construction time — not on every call.
+    # .bind_tools() wraps the LLM so the tool schemas are included in every
+    # request to the model. The model then decides whether to use a tool.
+    llm_to_use = llm.bind_tools(tools) if tools else llm
+
     def call_llm(state: ConversationState) -> dict:
         """
         Node 4: Sends the formatted prompt to the LLM and gets a response.
 
         WHAT DOES THIS NODE DO?
           - Calls llm.invoke() with the built prompt messages
-          - Stores the raw LLM response in state
+          - If tools are bound, checks whether the LLM requested tool calls
+          - Returns tool_calls list (may be empty) alongside the raw llm_response
 
-        WHY llm.invoke() NOT llm.predict()?
-          .invoke() is the modern LangChain interface that works with any
-          LangChain-compatible model. .predict() is deprecated.
+        WHY STORE tool_calls IN STATE?
+          The pipeline checks this field after call_llm to decide whether to
+          run execute_tools. Keeping it in state avoids coupling the pipeline
+          logic to the node implementation.
 
         Args:
             state: The current conversation state (must have 'built_prompt').
 
         Returns:
-            dict: Updated state with 'llm_response' (raw AIMessage from LLM).
+            dict: Updated state with 'llm_response' and 'tool_calls'.
         """
         if state.get("error"):
             logger.warning("[call_llm] Skipping due to previous error")
-            return {"llm_response": None}
+            return {"llm_response": None, "tool_calls": []}
 
         built_prompt = state.get("built_prompt")
         if not built_prompt:
             error_msg = "build_prompt node did not produce a prompt"
             logger.error(f"[call_llm] {error_msg}")
-            return {"error": error_msg, "llm_response": None}
+            return {"error": error_msg, "llm_response": None, "tool_calls": []}
 
         try:
             logger.info("[call_llm] Sending prompt to LLM...")
-            response = llm.invoke(built_prompt)
-            logger.info("[call_llm] LLM responded successfully")
-            return {"llm_response": response}
+            response = llm_to_use.invoke(built_prompt)
+
+            # Check if the LLM decided to call a tool.
+            # response.tool_calls is a list of dicts like:
+            #   [{"name": "search_products", "args": {"query": "laptop"}, "id": "call_abc123"}]
+            tool_calls = getattr(response, "tool_calls", []) or []
+
+            if tool_calls:
+                logger.info(f"[call_llm] LLM requested {len(tool_calls)} tool call(s): "
+                            f"{[tc['name'] for tc in tool_calls]}")
+            else:
+                logger.info("[call_llm] LLM responded directly (no tool calls)")
+
+            return {"llm_response": response, "tool_calls": tool_calls}
 
         except Exception as e:
             logger.error(f"[call_llm] LLM call failed: {e}")
             return {
                 "error": f"LLM call failed: {str(e)}",
                 "llm_response": None,
+                "tool_calls": [],
             }
 
     return call_llm
+
+
+def make_execute_tools_node(tools: list):
+    """
+    Factory that returns the 'execute_tools' node function.
+
+    WHAT IS THIS NODE?
+      After call_llm, if the LLM requested tool calls, this node:
+        1. Maps each tool call name to the actual Python function
+        2. Executes the function with the LLM-provided arguments
+        3. Wraps each result in a ToolMessage (LangChain's format for tool output)
+        4. Stores the results in state so call_llm can use them in the next pass
+
+    WHY ToolMessage?
+      The OpenAI API requires tool results to be returned as messages with a
+      specific format (role="tool", tool_call_id matching the request).
+      LangChain's ToolMessage handles this serialisation automatically.
+
+    Args:
+        tools: List of LangChain @tool functions available to the LLM.
+
+    Returns:
+        Callable: A node function with signature (ConversationState) -> dict.
+    """
+    # Build a name → tool lookup for fast access
+    tool_map = {t.name: t for t in tools}
+
+    def execute_tools(state: ConversationState) -> dict:
+        """
+        Node 4b: Executes tool calls requested by the LLM.
+
+        Args:
+            state: Must have 'tool_calls' (list of dicts from LLM).
+
+        Returns:
+            dict: Updated 'tool_results' (list of ToolMessage objects).
+        """
+        if state.get("error"):
+            logger.warning("[execute_tools] Skipping due to previous error")
+            return {"tool_results": []}
+
+        tool_calls = state.get("tool_calls", [])
+        if not tool_calls:
+            return {"tool_results": []}
+
+        results = []
+        for call in tool_calls:
+            tool_name = call["name"]
+            tool_args = call.get("args", {})
+            tool_call_id = call.get("id", "unknown")
+
+            if tool_name not in tool_map:
+                logger.error(f"[execute_tools] Unknown tool: {tool_name!r}")
+                result_str = f"Error: tool '{tool_name}' not found."
+            else:
+                try:
+                    logger.info(f"[execute_tools] Calling {tool_name}({tool_args})")
+                    result = tool_map[tool_name].invoke(tool_args)
+                    result_str = str(result)
+                    logger.info(f"[execute_tools] {tool_name} returned {len(result_str)} chars")
+                except Exception as e:
+                    logger.error(f"[execute_tools] {tool_name} raised: {e}")
+                    result_str = f"Error executing {tool_name}: {str(e)}"
+
+            # Wrap result in a ToolMessage so LangChain can include it
+            # in the conversation as the tool's "reply" to the LLM's request.
+            results.append(
+                ToolMessage(content=result_str, tool_call_id=tool_call_id)
+            )
+
+        return {"tool_results": results}
+
+    return execute_tools
 
 
 def make_format_response_node():
