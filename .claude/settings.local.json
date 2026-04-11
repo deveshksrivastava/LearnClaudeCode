@@ -9,7 +9,13 @@
       "Bash(.venv/Scripts/python.exe -m py_compile app/main.py)",
       "Bash(.venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestHealthEndpoint::test_health_returns_200 -v -s)",
       "Bash(.venv/Scripts/python.exe -m uvicorn app.main:app --reload)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(powershell:*)",
+      "Bash(gh pr create --title 'feat: LLM chatbot with tool calling, Playwright e2e tests' --base main --body ':*)",
+      "Bash(winget install:*)",
+      "Bash(choco install:*)",
+      "Bash(where gh:*)",
+      "Read(//c/Program Files/GitHub CLI/**)"
     ]
   }
 }
