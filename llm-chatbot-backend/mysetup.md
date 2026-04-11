@@ -1,3 +1,121 @@
+  
+## LLM Chatbot Backend — Architecture Overview                                                                               
+  llm-chatbot-backend/ — a production-grade FastAPI chatbot with RAG support.                                               
+
+  ---
+##  Tech Stack
+```
+  ┌───────────────────────┬───────────────────────────────────────────────────┐
+  │         Layer         │                    Technology                     │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ API Framework         │ FastAPI + Uvicorn                                 │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ LLM                   │ OpenAI / Azure OpenAI (switchable)                │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ Conversation Pipeline │ Custom sequential pipeline (originally LangGraph) │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ RAG Retrieval         │ LlamaIndex (VectorStoreIndex)                     │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ Vector Store          │ ChromaDB (persistent, on-disk)                    │
+  ├───────────────────────┼───────────────────────────────────────────────────┤
+  │ Config                │ pydantic-settings (reads .env)                    │
+  └───────────────────────┴───────────────────────────────────────────────────┘
+```
+  ---
+###    Folder Structure
+```
+  app/
+  ├── main.py              # App entry point, startup lifecycle
+  ├── config.py            # All settings from .env
+  ├── models.py            # Pydantic request/response schemas
+  ├── api/
+  │   ├── chat_router.py   # POST /api/v1/chat-llm, POST /api/v1/index
+  │   └── health_router.py # GET /api/v1/health
+  ├── graph/
+  │   ├── graph_builder.py # Assembles the pipeline
+  │   ├── nodes.py         # 5 pipeline node functions
+  │   └── state.py         # ConversationState TypedDict
+  ├── llm/
+  │   ├── llm_provider.py  # Returns ChatOpenAI or AzureChatOpenAI
+  │   └── prompt_templates.py  # RAG prompt + simple chat prompt
+  └── rag/
+      ├── document_loader.py  # Reads .txt/.pdf, chunks, embeds, stores in ChromaDB
+      ├── retriever.py        # Queries ChromaDB and returns relevant chunks
+      └── vector_store.py     # ChromaDB client + LlamaIndex index builder
+```
+  ---
+###    Startup Sequence (main.py)
+
+  When the server starts, it does this in order:
+
+  1. ChromaDB — connects to the persistent vector store
+  2. Auto-index — scans data/sample_docs/, indexes any new .txt/.pdf files not yet in ChromaDB
+  3. LlamaIndex — builds a VectorStoreIndex on top of ChromaDB (for semantic search)
+  4. LLM — creates a LangChain ChatOpenAI or AzureChatOpenAI client
+  5. Pipeline — builds the ConversationPipeline and stores everything on app.state
+
+  ---
+###  Conversation Pipeline (5 Nodes)
+
+  Each request to POST /api/v1/chat-llm runs through these nodes in sequence:
+
+  receive_input → retrieve_context → build_prompt → call_llm → format_response
+```
+  ┌──────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
+  │       Node       │                                   What it does                                    │
+  ├──────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ receive_input    │ Validates the user's message is not empty                                         │
+  ├──────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ retrieve_context │ Embeds the query, searches ChromaDB for top-k relevant chunks                     │
+  ├──────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ build_prompt     │ Picks RAG template (with context) or simple template (no docs), adds chat history │
+  ├──────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ call_llm         │ Calls llm.invoke() with the formatted prompt                                      │
+  ├──────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ format_response  │ Extracts text from AIMessage, appends to session history, returns final answer    │
+  └──────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+```
+  Each node is a factory function (closure) that captures dependencies like the LLM or index, then returns a plain (state:
+  dict) -> dict function.
+
+  ---
+  ### API Endpoints
+```
+  ┌────────┬──────────────────┬─────────────────────────────────────────────────────┐
+  │ Method │       Path       │                     Description                     │
+  ├────────┼──────────────────┼─────────────────────────────────────────────────────┤
+  │ GET    │ /api/v1/health   │ Health check (used by Azure load balancer)          │
+  ├────────┼──────────────────┼─────────────────────────────────────────────────────┤
+  │ POST   │ /api/v1/chat-llm │ Send a message; requires session_id + message       │
+  ├────────┼──────────────────┼─────────────────────────────────────────────────────┤
+  │ POST   │ /api/v1/index    │ Load .txt/.pdf files from a directory into ChromaDB │
+  ├────────┼──────────────────┼─────────────────────────────────────────────────────┤
+  │ GET    │ /docs            │ Swagger UI (auto-generated)                         │
+  └────────┴──────────────────┴─────────────────────────────────────────────────────┘
+```
+  ---
+ ###   Session Memory
+
+  - Conversation history is stored in-memory in a dict: _session_store[session_id] → list[messages]
+  - Same session_id = same conversation thread (multi-turn)
+  - For production: replace with Redis / Azure Cache for Redis
+
+  ---
+  ###  LLM Provider (Switchable)
+
+  Set LLM_PROVIDER=openai or LLM_PROVIDER=azure in .env. The llm_provider.py module returns the appropriate LangChain
+  client. Azure requires AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, and AZURE_OPENAI_DEPLOYMENT_NAME.
+
+  ---
+  ###  RAG Flow
+
+  1. Documents from data/sample_docs/ are chunked (512 tokens, 50 overlap)
+  2. Each chunk is embedded via OpenAI Embeddings and stored in ChromaDB
+  3. On each chat request, the user's query is embedded and the top-6 most similar chunks are retrieved
+  4. Those chunks are injected into the LLM prompt as [Source N: filename (similarity: 0.xx)]
+  5. The response includes a sources list so the frontend can show citations
+
+  
   # llm-chatbot-backend — Complete                                                                                  
                                                                                                                   
   43/43 tests pass | Server starts and responds | All quality gates pass                                          
@@ -61,3 +179,4 @@ install "chromadb&gt;=1.0.0" --prefer-binary 2&gt;&amp;1 | tail -10" completed (
                                                                                                                   
 - ● The background task completed successfully — that was the initial chromadb installation that finished after we'd
    already moved on. No action needed.                                                                            
+

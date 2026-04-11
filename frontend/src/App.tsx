@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UsersPage from './pages/UsersPage';
 import DashboardPage from './pages/DashboardPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
 import { fetchCart } from './api/cart';
 
 function ProtectedRoute({ isLoggedIn, children }: { isLoggedIn: boolean; children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         <Route path="/dashboard" element={<ProtectedRoute isLoggedIn={isLoggedIn}><DashboardPage /></ProtectedRoute>} />
+        <Route path="/project/:slug" element={<ProtectedRoute isLoggedIn={isLoggedIn}><ProjectDetailPage /></ProtectedRoute>} />
         <Route path="/products" element={<ProtectedRoute isLoggedIn={isLoggedIn}><ProductsPage onCartChange={refreshCartCount} /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute isLoggedIn={isLoggedIn}><CartPage /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute isLoggedIn={isLoggedIn}><UsersPage /></ProtectedRoute>} />

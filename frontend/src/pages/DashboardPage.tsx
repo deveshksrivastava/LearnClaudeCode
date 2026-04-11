@@ -1,150 +1,41 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PROJECTS, type Project } from '../data/projects';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface Project {
-  title: string;
-  category: string;
-  color: string;
-  iconBg: string;
-  iconColor: string;
-  borderHover: string;
-  shortDesc: string;
-  fullDesc: string;
-  status: string;
-  statusBg: string;
-  statusTextColor: string;
-  progress: number;
-  checklist: string[];
-  icon: React.ReactNode;
-}
-
-// ── Project data ─────────────────────────────────────────────────────────────
-
-const PROJECTS: Project[] = [
-  {
-    title: 'RAG Pipeline',
-    category: 'Core AI Engineering',
-    color: '#6366f1',
-    iconBg: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
-    borderHover: 'hover:border-indigo-300',
-    shortDesc: 'Build a production-grade RAG chatbot over real energy documents.',
-    fullDesc: 'Build a production-grade RAG chatbot over real energy documents. Implement chunking, embedding, and retrieval strategies.',
-    status: 'In Progress',
-    statusBg: 'bg-yellow-100',
-    statusTextColor: 'text-yellow-700',
-    progress: 65,
-    checklist: ['Set up ChromaDB vector store', 'Implement chunking strategy', 'Test retrieval accuracy', 'Connect to FastAPI backend', 'Write RAGAS evaluation'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V9l-6-6z"/>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v6h6"/>
-      </svg>
-    ),
-  },
-  {
-    title: 'LangGraph Agent',
-    category: 'Core AI Engineering',
-    color: '#10b981',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-    borderHover: 'hover:border-emerald-300',
-    shortDesc: 'Build a stateful multi-step agent with tool use and real API calls.',
-    fullDesc: 'Build a stateful multi-step agent using LangGraph with tool use — web search, calculator, and real API calls.',
-    status: 'Not Started',
-    statusBg: 'bg-gray-100',
-    statusTextColor: 'text-gray-600',
-    progress: 0,
-    checklist: ['Define agent state schema', 'Add web search tool', 'Add calculator tool', 'Build conversation memory', 'Test with real queries'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
-      </svg>
-    ),
-  },
-  {
-    title: 'Azure Deployment',
-    category: 'Production Systems',
-    color: '#0ea5e9',
-    iconBg: 'bg-sky-100',
-    iconColor: 'text-sky-600',
-    borderHover: 'hover:border-sky-300',
-    shortDesc: 'Deploy to Azure Container Apps with full CI/CD pipeline.',
-    fullDesc: 'Deploy the chatbot to Azure Container Apps with full GitHub Actions CI/CD pipeline across dev, UAT, and production environments.',
-    status: 'Planned',
-    statusBg: 'bg-blue-100',
-    statusTextColor: 'text-blue-700',
-    progress: 10,
-    checklist: ['Set up Azure Container Apps', 'Write Bicep IaC templates', 'Configure GitHub Actions workflow', 'Add environment secrets', 'Test dev → UAT → prod flow'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-      </svg>
-    ),
-  },
-  {
-    title: 'LangSmith Tracing',
-    category: 'Observability',
-    color: '#f97316',
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
-    borderHover: 'hover:border-orange-300',
-    shortDesc: 'Set up observability — latency, token usage, cost per query.',
-    fullDesc: 'Set up LangSmith observability across all AI pipeline stages. Track latency, token usage, failure rates, and cost per query.',
-    status: 'In Progress',
-    statusBg: 'bg-yellow-100',
-    statusTextColor: 'text-yellow-700',
-    progress: 40,
-    checklist: ['Install LangSmith SDK', 'Add tracing to all chains', 'Set up project dashboard', 'Configure cost tracking', 'Create alert rules'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-      </svg>
-    ),
-  },
-  {
-    title: 'RAGAS Evaluation',
-    category: 'Testing & Quality',
-    color: '#ec4899',
-    iconBg: 'bg-pink-100',
-    iconColor: 'text-pink-600',
-    borderHover: 'hover:border-pink-300',
-    shortDesc: 'Faithfulness, relevancy, context precision metrics dashboard.',
-    fullDesc: 'Implement RAGAS evaluation metrics — faithfulness, answer relevancy, context precision. Build a dashboard to track quality over time.',
-    status: 'Completed',
-    statusBg: 'bg-green-100',
-    statusTextColor: 'text-green-700',
-    progress: 100,
-    checklist: ['Install RAGAS library', 'Define evaluation dataset', 'Run faithfulness metrics', 'Run relevancy metrics', 'Build reporting dashboard'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-    ),
-  },
-  {
-    title: 'Multi-Agent System',
-    category: 'AI Architecture',
-    color: '#8b5cf6',
-    iconBg: 'bg-violet-100',
-    iconColor: 'text-violet-600',
-    borderHover: 'hover:border-violet-300',
-    shortDesc: 'Orchestrator + specialised sub-agents for energy domain queries.',
-    fullDesc: 'Design and build a multi-agent system with an orchestrator directing specialised sub-agents for energy data queries and anomaly detection.',
-    status: 'Planned',
-    statusBg: 'bg-blue-100',
-    statusTextColor: 'text-blue-700',
-    progress: 5,
-    checklist: ['Design agent architecture', 'Build orchestrator agent', 'Build energy query agent', 'Build anomaly detection agent', 'Test handoff between agents'],
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>
-    ),
-  },
-];
+// ── Per-project icons (JSX can't live in a plain .ts data file) ───────────────
+const PROJECT_ICONS: Record<string, React.ReactNode> = {
+  'rag-pipeline': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V9l-6-6z"/>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v6h6"/>
+    </svg>
+  ),
+  'langgraph-agent': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
+    </svg>
+  ),
+  'azure-deployment': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+    </svg>
+  ),
+  'langsmith-tracing': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+    </svg>
+  ),
+  'ragas-evaluation': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  ),
+  'multi-agent-system': (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+    </svg>
+  ),
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -168,8 +59,6 @@ export default function DashboardPage() {
     setCheckedItems((prev) => prev.map((v, i) => (i === index ? !v : v)));
   }
 
-  // Close panel on Escape — useEffect so the listener is always active,
-  // not just when a focusable element inside the div happens to be focused.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') closePanel();
@@ -179,9 +68,6 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    // flex-1 fills the space below the sticky NavBar; min-h-0 is required so
-    // a flex child with overflow-hidden actually clips its overflow instead of
-    // expanding to fit its content (flex's default min-height is "auto").
     <div className="flex flex-1 min-h-0 overflow-hidden relative bg-gray-100">
       {/* ── LEFT SIDEBAR ── */}
       <aside className="w-56 bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-y-auto">
@@ -245,9 +131,9 @@ export default function DashboardPage() {
 
       {/* ── MAIN CONTENT ── */}
       <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-        <div className="mb-5 ">
+        <div className="mb-5">
           <h1 className="text-lg font-semibold text-gray-800">Dashboard</h1>
-          <p className="text-sm text-gray-500">Click any card to view details</p>
+          <p className="text-sm text-gray-500">Click a card for a quick preview, or open the detail page for full info</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -259,7 +145,7 @@ export default function DashboardPage() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`w-9 h-9 ${project.iconBg} rounded-lg flex items-center justify-center`}>
-                  <span className={project.iconColor}>{project.icon}</span>
+                  <span className={project.iconColor}>{PROJECT_ICONS[project.slug]}</span>
                 </div>
                 <span className={`text-xs ${project.statusBg} ${project.statusTextColor} font-medium px-2 py-0.5 rounded-full`}>
                   {project.status}
@@ -273,7 +159,19 @@ export default function DashboardPage() {
                   style={{ width: `${project.progress}%`, backgroundColor: project.color }}
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">{project.progress}% complete</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-gray-400">{project.progress}% complete</p>
+                <Link
+                  to={`/project/${project.slug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
+                >
+                  View details
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
+                  </svg>
+                </Link>
+              </div>
             </div>
           ))}
         </div>
@@ -304,14 +202,25 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-400">{activeProject.category}</p>
                 </div>
               </div>
-              <button
-                onClick={closePanel}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/project/${activeProject.slug}`}
+                  className="px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition flex items-center gap-1"
+                >
+                  Full page
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                </Link>
+                <button
+                  onClick={closePanel}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Panel body */}
@@ -339,6 +248,17 @@ export default function DashboardPage() {
                     className="h-2 rounded-full transition-all duration-500"
                     style={{ width: `${activeProject.progress}%`, backgroundColor: activeProject.color }}
                   />
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tech Stack</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeProject.techStack.map((tech) => (
+                    <span key={tech} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                      {tech}
+                    </span>
+                  ))}
                 </div>
               </div>
 
