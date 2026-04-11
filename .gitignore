@@ -10,7 +10,7 @@ __pycache__/
 .venv/
 venv/
 env/
-
+.claude/
 # Node
 node_modules/
 frontend/node_modules/
