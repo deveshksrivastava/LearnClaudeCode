@@ -9,7 +9,7 @@
 
 import logging
 from pathlib import Path
-from typing import List
+from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 
@@ -285,9 +285,16 @@ async def list_documents(
 )
 async def upload_documents(
     request: Request,
-    files: List[UploadFile] = File(...),
+    files: Annotated[List[UploadFile], File(description="One or more .txt, .pdf, or .md files to upload")],
     settings: Settings = Depends(get_settings),
 ) -> UploadResponse:
+    """
+    POST /api/v1/upload — main upload endpoint.
+    WHAT THIS DOES:
+      1. Validates uploaded files (name and extension)
+      2. Saves files to data/sample_docs/
+      3. Rebuilds the ChromaDB index and LangGraph graph to include new files
+    """
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
     uploaded_names: list[str] = []
