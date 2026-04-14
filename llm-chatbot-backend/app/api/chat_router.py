@@ -8,12 +8,20 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pathlib import Path
+from typing import List
 
-from app.models import ChatRequest, ChatResponse, IndexRequest, IndexResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+
+from app.models import (
+    ChatRequest, ChatResponse,
+    IndexRequest, IndexResponse,
+    UploadResponse, DocumentListResponse, DeleteDocumentResponse,
+)
 from app.config import Settings, get_settings
-from app.graph.graph_builder import run_conversation_graph
-from app.rag.document_loader import load_documents_from_directory
+from app.graph.graph_builder import run_conversation_graph, build_conversation_graph
+from app.rag.document_loader import load_documents_from_directory, SUPPORTED_EXTENSIONS
+from app.rag.vector_store import build_vector_store_index
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +32,10 @@ router = APIRouter(prefix="/api/v1", tags=["chat-llm"])
 # In production, replace with Redis or Azure Cache for Redis for persistence
 # across multiple server instances.
 _session_store: dict[str, list[dict]] = {}
+
+# Path to the directory where uploaded documents are stored.
+# Defined at module level so tests can monkeypatch it.
+DOCS_DIR = Path(__file__).parent.parent.parent / "data" / "sample_docs"
 
 
 @router.post(
@@ -193,3 +205,22 @@ async def index_documents(
         indexed=indexed_count,
         message=f"Successfully indexed {indexed_count} document(s) from '{directory}'",
     )
+
+
+@router.get(
+    "/documents",
+    response_model=DocumentListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="List indexed documents",
+    description="Returns the filenames of all supported files currently in data/sample_docs/.",
+)
+async def list_documents(
+    settings: Settings = Depends(get_settings),
+) -> DocumentListResponse:
+    if not DOCS_DIR.exists():
+        return DocumentListResponse(documents=[])
+    files = sorted(
+        f.name for f in DOCS_DIR.iterdir()
+        if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
+    )
+    return DocumentListResponse(documents=files)
