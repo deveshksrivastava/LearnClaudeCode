@@ -41,6 +41,7 @@ openai>=1.30                   # Official OpenAI Python client (used by LangChai
 
 # ── Utilities ──────────────────────────────────────────────────────────────
 python-dotenv>=1.0             # Loads .env file into environment variables at startup
+python-multipart>=0.0.9        # Required by FastAPI for multipart/form-data file uploads (UploadFile)
 nltk>=3.8                      # Natural language toolkit — required by LlamaIndex SentenceSplitter
 
 # ── Testing ────────────────────────────────────────────────────────────────

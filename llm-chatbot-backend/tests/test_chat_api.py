@@ -234,3 +234,56 @@ class TestLoadSingleFile:
 
         with pytest.raises(ValueError, match="Unsupported file type"):
             load_single_file(str(bad_file), mock_collection, settings)
+
+
+class TestUploadEndpoint:
+    """Tests for POST /api/v1/upload."""
+
+    def test_upload_valid_txt_returns_200(self, test_client, tmp_path):
+        """A valid .txt file upload returns HTTP 200."""
+        file_content = b"This is a test document for upload."
+        with patch("app.api.chat_router.load_single_file", return_value=2), \
+             patch("app.api.chat_router.build_vector_store_index", return_value=MagicMock()), \
+             patch("app.api.chat_router.UPLOAD_DIR", tmp_path):
+            response = test_client.post(
+                "/api/v1/upload",
+                files={"file": ("test.txt", file_content, "text/plain")},
+            )
+        assert response.status_code == 200
+
+    def test_upload_response_has_required_fields(self, test_client, tmp_path):
+        """Upload response contains filename, indexed_chunks, message."""
+        file_content = b"Sample content for upload test."
+        with patch("app.api.chat_router.load_single_file", return_value=3), \
+             patch("app.api.chat_router.build_vector_store_index", return_value=MagicMock()), \
+             patch("app.api.chat_router.UPLOAD_DIR", tmp_path):
+            response = test_client.post(
+                "/api/v1/upload",
+                files={"file": ("sample.txt", file_content, "text/plain")},
+            )
+        data = response.json()
+        assert "filename" in data
+        assert "indexed_chunks" in data
+        assert "message" in data
+
+    def test_upload_returns_400_for_unsupported_extension(self, test_client):
+        """Uploading an .exe returns HTTP 400 — rejected before any indexing."""
+        response = test_client.post(
+            "/api/v1/upload",
+            files={"file": ("malware.exe", b"bad content", "application/octet-stream")},
+        )
+        assert response.status_code == 400
+
+    def test_upload_returns_422_if_no_file_provided(self, test_client):
+        """Omitting the file field returns HTTP 422."""
+        response = test_client.post("/api/v1/upload")
+        assert response.status_code == 422
+
+    def test_upload_returns_400_for_oversized_file(self, test_client):
+        """A file over 10 MB returns HTTP 400 — rejected after read, before disk write."""
+        big_content = b"x" * (10 * 1024 * 1024 + 1)  # 10 MB + 1 byte
+        response = test_client.post(
+            "/api/v1/upload",
+            files={"file": ("big.txt", big_content, "text/plain")},
+        )
+        assert response.status_code == 400

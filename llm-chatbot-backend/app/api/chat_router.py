@@ -8,12 +8,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pathlib import Path
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 
-from app.models import ChatRequest, ChatResponse, IndexRequest, IndexResponse
+from app.models import ChatRequest, ChatResponse, IndexRequest, IndexResponse, UploadResponse
 from app.config import Settings, get_settings
 from app.graph.graph_builder import run_conversation_graph
-from app.rag.document_loader import load_documents_from_directory
+from app.rag.document_loader import load_documents_from_directory, load_single_file
+from app.rag.vector_store import build_vector_store_index
 
 logger = logging.getLogger(__name__)
 
@@ -190,4 +192,117 @@ async def index_documents(
     return IndexResponse(
         indexed=indexed_count,
         message=f"Successfully indexed {indexed_count} document(s) from '{directory}'",
+    )
+
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
+# Resolved at module load time — works regardless of CWD
+UPLOAD_DIR = Path(__file__).parent.parent.parent / "data" / "sample_docs"
+
+
+@router.post(
+    "/upload",
+    response_model=UploadResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Upload and index a document",
+    description=(
+        "Upload a .txt, .pdf, or .md file. The file is saved to the sample_docs "
+        "folder and immediately indexed into ChromaDB for RAG retrieval."
+    ),
+)
+async def upload_document(
+    request: Request,
+    file: UploadFile = File(...),
+    settings: Settings = Depends(get_settings),
+) -> UploadResponse:
+    """
+    POST /api/v1/upload — file upload and indexing endpoint.
+
+    WHAT THIS DOES:
+      1. Validates file extension and size (rejects early — no disk write on bad input)
+      2. Saves the file to data/sample_docs/
+      3. Indexes it into ChromaDB via load_single_file()
+      4. Rebuilds app.state.vector_index so /chat-llm sees it immediately
+      5. Returns filename + chunk count
+
+    Args:
+        request:  FastAPI Request (used to access app.state).
+        file:     The uploaded file (multipart/form-data).
+        settings: Application settings.
+
+    Returns:
+        UploadResponse: Filename, number of indexed chunks, and status message.
+
+    Raises:
+        HTTPException 400: Bad extension, oversized file, or indexing error.
+        HTTPException 503: If ChromaDB is not ready.
+    """
+    filename = file.filename or "upload"
+    extension = Path(filename).suffix.lower()
+    allowed = {".txt", ".pdf", ".md"}
+
+    if extension not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type '{extension}'. Allowed: {', '.join(sorted(allowed))}",
+        )
+
+    # Read the full content first so we can size-check before touching disk
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large ({len(content)} bytes). Maximum allowed: {MAX_UPLOAD_BYTES} bytes.",
+        )
+
+    chroma_client = getattr(request.app.state, "chroma_client", None)
+    if chroma_client is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ChromaDB is not ready. Check server logs.",
+        )
+
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    save_path = UPLOAD_DIR / filename
+
+    try:
+        save_path.write_bytes(content)
+        logger.info(f"Saved uploaded file: {save_path}")
+
+        collection = chroma_client.get_or_create_collection(
+            name=settings.chroma_collection_name,
+            metadata={"hnsw:space": "cosine"},
+        )
+        request.app.state.chroma_collection = collection
+
+        indexed_chunks = load_single_file(
+            file_path=str(save_path.resolve()),
+            collection=collection,
+            settings=settings,
+        )
+
+        # Rebuild the live index so /chat-llm immediately sees the new document
+        request.app.state.vector_index = build_vector_store_index(collection)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        save_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        save_path.unlink(missing_ok=True)
+        logger.error(f"Upload failed for '{filename}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Upload failed: {str(e)}",
+        )
+
+    return UploadResponse(
+        filename=filename,
+        indexed_chunks=indexed_chunks,
+        message=(
+            f"'{filename}' uploaded and indexed as {indexed_chunks} chunk(s). "
+            f"Note: uploading a file with the same name as an existing file will replace it."
+        ),
     )
