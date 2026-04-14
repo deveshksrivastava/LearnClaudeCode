@@ -329,3 +329,44 @@ async def upload_documents(
             f"Index now contains {indexed_count} chunk(s)."
         ),
     )
+
+
+@router.delete(
+    "/documents/{filename}",
+    response_model=DeleteDocumentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Delete an indexed document",
+    description=(
+        "Remove a file from data/sample_docs/ by name. "
+        "Re-indexes remaining files and rebuilds the conversation graph."
+    ),
+)
+async def delete_document(
+    filename: str,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+) -> DeleteDocumentResponse:
+    # Reject path traversal and directory separators
+    if "/" in filename or "\\" in filename or ".." in filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid filename: '{filename}'",
+        )
+
+    target = DOCS_DIR / filename
+    if not target.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File '{filename}' not found.",
+        )
+
+    target.unlink()
+    logger.info(f"Deleted document: {target}")
+
+    indexed_count = await _rebuild_graph(request, settings)
+
+    return DeleteDocumentResponse(
+        filename=filename,
+        indexed=indexed_count,
+        message=f"Deleted '{filename}'. Index now contains {indexed_count} chunk(s).",
+    )

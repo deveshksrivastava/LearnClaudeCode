@@ -110,3 +110,30 @@ def test_upload_multiple_files(client, patch_docs_dir):
     assert set(data["uploaded"]) == {"doc1.txt", "doc2.md"}
     assert (patch_docs_dir / "doc1.txt").exists()
     assert (patch_docs_dir / "doc2.md").exists()
+
+
+# ── DELETE /api/v1/documents/{filename} ──────────────────────────────────────
+
+def test_delete_nonexistent_file_returns_404(client):
+    res = client.delete("/api/v1/documents/ghost.txt")
+    assert res.status_code == 404
+    assert "ghost.txt" in res.json()["detail"]
+
+
+def test_delete_path_traversal_returns_400(client):
+    # Filename containing ".." must be rejected before touching disk
+    res = client.delete("/api/v1/documents/..evil")
+    assert res.status_code == 400
+
+
+def test_delete_removes_file_and_reindexes(client, patch_docs_dir):
+    (patch_docs_dir / "target.txt").write_text("some content")
+    with patch("app.api.chat_router.load_documents_from_directory", return_value=0), \
+         patch("app.api.chat_router.build_vector_store_index", return_value=None), \
+         patch("app.api.chat_router.build_conversation_graph", return_value=MagicMock()):
+        res = client.delete("/api/v1/documents/target.txt")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["filename"] == "target.txt"
+    assert data["indexed"] == 0
+    assert not (patch_docs_dir / "target.txt").exists()
