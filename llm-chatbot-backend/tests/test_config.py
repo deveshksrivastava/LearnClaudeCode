@@ -29,7 +29,7 @@ class TestSettings:
         assert settings.llm_max_tokens == 1024
         assert settings.chroma_collection_name == "chatbot_docs"
         assert settings.app_version == "1.0.0"
-        assert settings.rag_top_k == 3
+        assert settings.rag_top_k == 6
 
     def test_custom_values_override_defaults(self):
         """
