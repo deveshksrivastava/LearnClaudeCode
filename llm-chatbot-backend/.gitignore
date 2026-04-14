@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitignore — Files that should NEVER be committed to git
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Secrets — CRITICAL: never commit these
+.env
+*.key
+*.pem
+
+# Python bytecode cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# ChromaDB local data (can be large, should be re-created from docs)
+chroma_data/
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.xml
+
+# IDE config
+.vscode/
+.idea/
+*.swp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Azure Developer CLI
+.azure/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

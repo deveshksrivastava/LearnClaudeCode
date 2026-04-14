@@ -1,7 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function LoginPage() {
+interface Props {
+  onLogin?: () => void;
+}
+
+export default function LoginPage({ onLogin }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,8 +19,8 @@ export default function LoginPage() {
       setError('Please fill in all fields.');
       return;
     }
-    // Placeholder: navigate to products after "login"
-    navigate('/');
+    onLogin?.();
+    navigate('/dashboard');
   };
 
   return (

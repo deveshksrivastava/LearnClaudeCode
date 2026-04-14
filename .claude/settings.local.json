@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe -m py_compile app/graph/state.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/graph/nodes.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/graph/graph_builder.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/api/health_router.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/api/chat_router.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/main.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestHealthEndpoint::test_health_returns_200 -v -s)",
+      "Bash(.venv/Scripts/python.exe -m uvicorn app.main:app --reload)",
+      "Read(//tmp/**)",
+      "Bash(powershell:*)",
+      "Bash(gh pr create --title 'feat: LLM chatbot with tool calling, Playwright e2e tests' --base main --body ':*)",
+      "Bash(winget install:*)",
+      "Bash(choco install:*)",
+      "Bash(where gh:*)",
+      "Read(//c/Program Files/GitHub CLI/**)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_upload_router.py -v)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/ -v)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_upload_router.py::test_delete_nonexistent_file_returns_404 tests/test_upload_router.py::test_delete_removes_file_and_reindexes -v)"
+    ]
+  }
+}
