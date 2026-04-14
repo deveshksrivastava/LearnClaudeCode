@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# requirements.txt — Pinned dependencies for the LLM Chatbot Backend
+#
+# WHY PIN VERSIONS?
+#   AI/ML libraries change fast. Pinning ensures that what works today
+#   still works tomorrow, in CI, and on Azure — no surprise breakages.
+#
+# HOW TO INSTALL:
+#   pip install -r requirements.txt
+#
+# NOTE ON CHROMADB:
+#   chromadb 0.5.x requires chroma-hnswlib which needs C++ build tools on Windows.
+#   This project uses chromadb>=1.0.0 which uses pre-built wheels (no compiler needed).
+#   The API remains compatible: PersistentClient, get_or_create_collection, etc.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Web framework ──────────────────────────────────────────────────────────
+fastapi>=0.111                 # The web framework that handles HTTP requests
+uvicorn[standard]>=0.30        # ASGI server that runs FastAPI (like a car engine for the framework)
+
+# ── Data validation ────────────────────────────────────────────────────────
+pydantic>=2.7                  # Validates and parses request/response data automatically
+pydantic-settings>=2.3         # Reads config from .env files into typed Python classes
+
+# ── LangChain ecosystem ────────────────────────────────────────────────────
+langchain>=0.2                 # Core orchestration layer — chains prompts + LLM calls together
+langchain-openai>=0.1          # LangChain adapter for OpenAI and Azure OpenAI APIs
+langchain-community>=0.2       # Community integrations (loaders, utilities)
+
+# ── LlamaIndex (document indexing + RAG) ───────────────────────────────────
+llama-index>=0.10              # Framework for indexing docs and running RAG pipelines
+llama-index-vector-stores-chroma   # ChromaDB adapter for LlamaIndex
+llama-index-embeddings-openai      # OpenAI embeddings adapter for LlamaIndex
+
+# ── Vector database ────────────────────────────────────────────────────────
+# chromadb>=1.0.0 has pre-built wheels — no C++ compiler required on Windows
+chromadb>=1.0.0                # Local vector database — stores and retrieves document embeddings
+
+# ── OpenAI SDK ─────────────────────────────────────────────────────────────
+openai>=1.30                   # Official OpenAI Python client (used by LangChain + LlamaIndex)
+
+# ── Utilities ──────────────────────────────────────────────────────────────
+python-dotenv>=1.0             # Loads .env file into environment variables at startup
+
+# ── Testing ────────────────────────────────────────────────────────────────
+pytest>=8.2                    # Test runner
+pytest-asyncio>=0.23           # Async test support (FastAPI endpoints are async)
+pytest-mock>=3.14              # Easy mocking of external services (OpenAI, ChromaDB)
+httpx>=0.27                    # HTTP client used by FastAPI TestClient for async tests

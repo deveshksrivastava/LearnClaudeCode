@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WHAT IS THIS FILE?
+# azure.yaml is the configuration file for the Azure Developer CLI (azd).
+# azd is a command-line tool that automates deploying apps to Azure.
+# With `azd up`, it provisions all Azure resources, builds your Docker image,
+# pushes it to Azure Container Registry, and deploys to Azure Container Apps.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# The azd schema version — must be "alpha:AzdInitConfig/v1"
+name: llm-chatbot-backend
+
+# Services defines the deployable parts of your application
+services:
+  # The name here ("llm-chatbot") is how azd refers to this service
+  llm-chatbot:
+    # "containerapp" tells azd to deploy to Azure Container Apps
+    host: containerapp
+    # The programming language (used by azd for build detection)
+    language: python
+    # Path to the Dockerfile (relative to azure.yaml)
+    docker:
+      path: ./Dockerfile
+      context: .
+
+# Infrastructure is defined in the infra/ folder (Bicep files)
+# azd reads this and runs `az deployment` against your Azure subscription
+infra:
+  provider: bicep
+  path: infra/

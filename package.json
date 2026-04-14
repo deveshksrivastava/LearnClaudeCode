@@ -1,11 +1,12 @@
 {
   "name": "shopfast",
   "version": "1.0.0",
-  "description": "ShopFast — Full-stack e-commerce app. FastAPI backend (port 8000) + React/Vite frontend (port 5173). Run 'npm run dev' from this folder to start both servers together.",
+  "description": "ShopFast — Full-stack app. Ecommerce API (port 8000) + LLM Chatbot API (port 8001) + React/Vite frontend (port 5173). Run 'npm run dev' to start everything.",
   "private": true,
   "scripts": {
-    "dev": "concurrently --names \"api,web\" --prefix-colors \"cyan,magenta\" \"uvicorn app.main:app --reload\" \"npm run dev --prefix frontend\"",
-    "dev:api": "uvicorn app.main:app --reload",
+    "dev": "concurrently --names \"ecommerce,chatbot,frontend\" --prefix-colors \"cyan,yellow,magenta\" \"npm run dev:api\" \"npm run dev:chatbot\" \"npm run dev:web\"",
+    "dev:api": "uvicorn app.main:app --reload --port 8000",
+    "dev:chatbot": "bash -c \"cd llm-chatbot-backend && .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8002\"",
     "dev:web": "npm run dev --prefix frontend"
   },
   "engines": {
@@ -13,6 +14,7 @@
     "python": ">=3.9"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "concurrently": "^9.2.1"
   }
 }
