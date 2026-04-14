@@ -207,6 +207,53 @@ async def index_documents(
     )
 
 
+async def _rebuild_graph(request: Request, settings: Settings) -> int:
+    """
+    Clear ChromaDB, re-index all files currently in DOCS_DIR, then rebuild
+    app.state.vector_index and app.state.compiled_graph.
+
+    WHY REBUILD THE GRAPH?
+      The existing /index endpoint only writes to ChromaDB but does not update
+      app.state. Without rebuilding, the chatbot keeps using the old index and
+      will not see newly uploaded or deleted files.
+
+    Returns:
+        int: Total document chunks now indexed in ChromaDB.
+    """
+    collection = request.app.state.chroma_collection
+
+    # Wipe existing ChromaDB entries without dropping the collection object
+    if collection.count() > 0:
+        all_ids = collection.get()["ids"]
+        if all_ids:
+            collection.delete(ids=all_ids)
+
+    # Re-index whatever supported files remain on disk
+    indexed_count = 0
+    if DOCS_DIR.exists():
+        supported = [
+            f for f in DOCS_DIR.iterdir()
+            if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
+        ]
+        if supported:
+            indexed_count = load_documents_from_directory(str(DOCS_DIR), collection, settings)
+
+    # Rebuild LlamaIndex VectorStoreIndex from the updated ChromaDB collection
+    new_index = build_vector_store_index(collection)
+    request.app.state.vector_index = new_index
+
+    # Rebuild LangGraph conversation graph so it uses the new index
+    new_graph = build_conversation_graph(
+        llm=request.app.state.llm,
+        index=new_index,
+        settings=settings,
+        tools=request.app.state.tools,
+    )
+    request.app.state.compiled_graph = new_graph
+
+    return indexed_count
+
+
 @router.get(
     "/documents",
     response_model=DocumentListResponse,
@@ -224,3 +271,61 @@ async def list_documents(
         if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
     )
     return DocumentListResponse(documents=files)
+
+
+@router.post(
+    "/upload",
+    response_model=UploadResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Upload documents for RAG",
+    description=(
+        "Upload one or more .txt, .pdf, or .md files. "
+        "Files are saved to data/sample_docs/ and ChromaDB is re-indexed immediately."
+    ),
+)
+async def upload_documents(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    settings: Settings = Depends(get_settings),
+) -> UploadResponse:
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+
+    uploaded_names: list[str] = []
+    for upload in files:
+        filename = upload.filename or ""
+
+        # Reject path traversal and directory separators in the filename
+        if "/" in filename or "\\" in filename or ".." in filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid filename: '{filename}'",
+            )
+
+        # Reject unsupported extensions
+        suffix = Path(filename).suffix.lower()
+        if suffix not in SUPPORTED_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Unsupported file type '{suffix}'. "
+                    f"Only {', '.join(sorted(SUPPORTED_EXTENSIONS))} are supported."
+                ),
+            )
+
+        content = await upload.read()
+        dest = DOCS_DIR / filename
+        dest.write_bytes(content)
+        uploaded_names.append(filename)
+        logger.info(f"Saved uploaded file: {dest}")
+
+    indexed_count = await _rebuild_graph(request, settings)
+
+    names_str = ", ".join(uploaded_names)
+    return UploadResponse(
+        uploaded=uploaded_names,
+        indexed=indexed_count,
+        message=(
+            f"Uploaded {len(uploaded_names)} file(s): {names_str}. "
+            f"Index now contains {indexed_count} chunk(s)."
+        ),
+    )

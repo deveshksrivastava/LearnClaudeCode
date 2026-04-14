@@ -57,3 +57,56 @@ def test_list_documents_returns_supported_files_sorted(client, patch_docs_dir):
     res = client.get("/api/v1/documents")
     assert res.status_code == 200
     assert res.json()["documents"] == ["alpha.pdf", "notes.md", "zebra.txt"]
+
+
+# ── POST /api/v1/upload ──────────────────────────────────────────────────────
+
+def test_upload_rejects_unsupported_extension(client):
+    res = client.post(
+        "/api/v1/upload",
+        files=[("files", ("virus.exe", b"MZ", "application/octet-stream"))],
+    )
+    assert res.status_code == 400
+    assert "supported" in res.json()["detail"].lower()
+
+
+def test_upload_rejects_path_traversal(client):
+    res = client.post(
+        "/api/v1/upload",
+        files=[("files", ("../evil.txt", b"bad", "text/plain"))],
+    )
+    assert res.status_code == 400
+
+
+def test_upload_saves_file_and_returns_response(client, patch_docs_dir):
+    with patch("app.api.chat_router.load_documents_from_directory", return_value=3), \
+         patch("app.api.chat_router.build_vector_store_index", return_value=None), \
+         patch("app.api.chat_router.build_conversation_graph", return_value=MagicMock()):
+        res = client.post(
+            "/api/v1/upload",
+            files=[("files", ("policy.txt", b"return policy text", "text/plain"))],
+        )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["uploaded"] == ["policy.txt"]
+    assert data["indexed"] == 3
+    assert "policy.txt" in data["message"]
+    assert (patch_docs_dir / "policy.txt").exists()
+
+
+def test_upload_multiple_files(client, patch_docs_dir):
+    with patch("app.api.chat_router.load_documents_from_directory", return_value=4), \
+         patch("app.api.chat_router.build_vector_store_index", return_value=None), \
+         patch("app.api.chat_router.build_conversation_graph", return_value=MagicMock()):
+        res = client.post(
+            "/api/v1/upload",
+            files=[
+                ("files", ("doc1.txt", b"content one", "text/plain")),
+                ("files", ("doc2.md", b"# content two", "text/markdown")),
+            ],
+        )
+    assert res.status_code == 200
+    data = res.json()
+    assert set(data["uploaded"]) == {"doc1.txt", "doc2.md"}
+    assert (patch_docs_dir / "doc1.txt").exists()
+    assert (patch_docs_dir / "doc2.md").exists()
