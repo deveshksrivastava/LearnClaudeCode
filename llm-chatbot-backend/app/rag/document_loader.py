@@ -135,6 +135,69 @@ def load_documents_from_directory(
         raise
 
 
+def load_single_file(
+    file_path: str,
+    collection: chromadb.Collection,
+    settings: Settings,
+) -> int:
+    """
+    Loads a single file into ChromaDB via LlamaIndex.
+
+    Uses SimpleDirectoryReader(input_files=[...]) so only this one file
+    is processed — not the whole directory.
+
+    Args:
+        file_path:  Absolute or relative path to the file.
+        collection: ChromaDB collection to store embeddings in.
+        settings:   Application settings (embedding model + chunking).
+
+    Returns:
+        int: Number of document chunks stored in ChromaDB.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError:        If the file extension is not supported.
+        Exception:         For LlamaIndex/ChromaDB errors.
+    """
+    path = Path(file_path).resolve()
+
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file type '{path.suffix}'. "
+            f"Allowed: {', '.join(sorted(SUPPORTED_EXTENSIONS))}"
+        )
+
+    logger.info(f"Indexing single file: {path.name}")
+
+    try:
+        configure_llama_settings(settings)
+
+        reader = SimpleDirectoryReader(input_files=[str(path)])
+        documents = reader.load_data()
+        logger.info(f"Loaded {len(documents)} document(s) from {path.name}")
+
+        vector_store = ChromaVectorStore(chroma_collection=collection)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+        VectorStoreIndex.from_documents(
+            documents,
+            storage_context=storage_context,
+            show_progress=False,
+        )
+
+        logger.info(f"Indexed {len(documents)} chunk(s) from {path.name}")
+        return len(documents)
+
+    except (FileNotFoundError, ValueError):
+        raise
+    except Exception as e:
+        logger.error(f"Failed to index file '{file_path}': {e}")
+        raise
+
+
 def _find_supported_files(dir_path: Path) -> List[Path]:
     """
     Scans a directory and returns a list of files with supported extensions.

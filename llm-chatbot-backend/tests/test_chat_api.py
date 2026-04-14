@@ -6,7 +6,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 import pytest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+from app.rag.document_loader import load_single_file
+from app.config import Settings
 
 
 class TestHealthEndpoint:
@@ -182,3 +185,52 @@ class TestIndexEndpoint:
             json={},  # Missing 'directory'
         )
         assert response.status_code == 422
+
+
+class TestLoadSingleFile:
+    """Unit tests for load_single_file()."""
+
+    def _make_settings(self):
+        return Settings(
+            llm_provider="openai",
+            openai_api_key="sk-test-fake",
+            openai_embedding_model="text-embedding-ada-002",
+            rag_chunk_size=256,
+            rag_chunk_overlap=20,
+        )
+
+    def test_load_single_file_returns_chunk_count(self, tmp_path):
+        """load_single_file returns a positive integer for a valid .txt file."""
+        sample = tmp_path / "sample.txt"
+        sample.write_text("Hello world. This is a test document with enough text to chunk.")
+
+        mock_collection = MagicMock()
+        settings = self._make_settings()
+
+        with patch("app.rag.document_loader.configure_llama_settings"), \
+             patch("app.rag.document_loader.VectorStoreIndex") as mock_index, \
+             patch("app.rag.document_loader.ChromaVectorStore"), \
+             patch("app.rag.document_loader.StorageContext"):
+            mock_index.from_documents.return_value = MagicMock()
+            result = load_single_file(str(sample), mock_collection, settings)
+
+        assert isinstance(result, int)
+        assert result >= 1
+
+    def test_load_single_file_raises_for_missing_file(self, tmp_path):
+        """load_single_file raises FileNotFoundError for a non-existent path."""
+        mock_collection = MagicMock()
+        settings = self._make_settings()
+
+        with pytest.raises(FileNotFoundError):
+            load_single_file(str(tmp_path / "missing.txt"), mock_collection, settings)
+
+    def test_load_single_file_raises_for_unsupported_extension(self, tmp_path):
+        """load_single_file raises ValueError for .exe or other unsupported types."""
+        bad_file = tmp_path / "virus.exe"
+        bad_file.write_text("bad")
+        mock_collection = MagicMock()
+        settings = self._make_settings()
+
+        with pytest.raises(ValueError, match="Unsupported file type"):
+            load_single_file(str(bad_file), mock_collection, settings)
