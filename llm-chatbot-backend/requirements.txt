@@ -41,6 +41,7 @@ openai>=1.30                   # Official OpenAI Python client (used by LangChai
 
 # ── Utilities ──────────────────────────────────────────────────────────────
 python-dotenv>=1.0             # Loads .env file into environment variables at startup
+nltk>=3.8                      # Natural language toolkit — required by LlamaIndex SentenceSplitter
 
 # ── Testing ────────────────────────────────────────────────────────────────
 pytest>=8.2                    # Test runner

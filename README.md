@@ -91,9 +91,12 @@ Option C — one-liner to free port 8000 (PowerShell):
 Get-NetTCPConnection -LocalPort 8000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
 ```
 
-API runs at: **http://127.0.0.1:8000**
-Interactive docs: **http://127.0.0.1:8000/docs**
+ - API runs at: **http://127.0.0.1:8000**
+ - Interactive docs: **http://127.0.0.1:8000/docs**
 
+## Run Curls/runbackend
+curl -s -X POST http://localhost:8002/api/v1/index -H 'Content-Type: application/json' -d '{"directory": "./data/sample_docs"}' 2>&1
+cd D:/sites/LearnClaudeCode/llm-chatbot-backend && venv/Scripts/python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
 
 
 ### Frontend Setup
@@ -634,3 +637,68 @@ POST /api/v1/chat-llm
 - How RAG retrieval connects to ChromaDB
 - How to add a new node to the pipeline
 - How session memory works across turns
+
+# How to use Claude Code 
+
+A good sequence for you is:
+```
+ask for implementation plan
+ask for one tiny change
+run locally
+fix exact error
+commit
+push after a stable checkpoint
+```
+
+## Phase 1: Planning only
+First ask for analysis, not code.
+Example:
+```
+    Analyze this codebase change only. Do not write code yet.
+
+    Goal: add file upload feature to frontend and backend.
+
+    Please give:
+
+    files that need to change
+    backend changes
+    frontend changes
+    risks
+    step-by-step implementation plan in very small tasks
+    likely failure points
+
+    Keep the plan practical and based on the existing code.
+```
+
+This forces the model to think before editing.
+
+## Phase 2: One change at a time
+
+Then give one bounded task.
+```
+    Implement only step 1.
+
+    Task:
+    Create a backend FastAPI endpoint to accept a single file upload.
+
+    Constraints:
+
+    * do not change frontend
+    * do not refactor unrelated code
+    * keep the route isolated
+    * tell me exactly which files you changed
+    * show how I should test it with Swagger or curl
+
+```
+
+## Phase 3: Test immediately
+
+After every small change:
+```
+run app
+run affected test
+hit endpoint
+inspect logs
+commit if good
+```
+Do not wait until 10 changes are done.

@@ -69,6 +69,8 @@ uv sync
 
 # ── LLM chatbot: Python deps (in its own venv) ─────────────────────────────
 cd llm-chatbot-backend
+python3 -m venv venv
+source venv/Scripts/activate
 pip install -r requirements.txt
 
 # ── Run tests ──────────────────────────────────────────────────────────────

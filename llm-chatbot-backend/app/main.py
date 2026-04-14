@@ -79,6 +79,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"LLM Provider: {settings.llm_provider}")
 
     try:
+        # Step 0: NLTK — pre-initialise to fail fast rather than at request time.
+        # LlamaIndex's SentenceSplitter lazily imports nltk during text splitting.
+        # By triggering wait_for_nltk_check() here we ensure nltk and its bundled
+        # punkt_tab/stopwords data are on the NLTK path before any request arrives.
+        logger.info("Pre-initialising NLTK data...")
+        from llama_index.core.utils import globals_helper
+        globals_helper.wait_for_nltk_check()
+        logger.info("NLTK data ready.")
+
         # Step 1: ChromaDB — initialise the persistent vector store
         logger.info("Initialising ChromaDB...")
         chroma_client = get_chroma_client(settings)
