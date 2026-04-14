@@ -128,3 +128,23 @@ class TestSettings:
         with patch.dict(os.environ, {"openai_api_key": "sk-lowercase"}):
             settings = Settings()
             assert settings.openai_api_key == "sk-lowercase"
+
+    def test_chroma_in_memory_defaults_false(self):
+        """
+        WHAT: Tests that chroma_in_memory defaults to False.
+        WHY:  By default, we use persistent ChromaDB with disk storage.
+              In-memory mode must be explicitly enabled for stateless deployments.
+        """
+        os.environ.pop("CHROMA_IN_MEMORY", None)
+        settings = Settings()
+        assert settings.chroma_in_memory is False
+
+    def test_chroma_in_memory_env_var(self):
+        """
+        WHAT: Tests that chroma_in_memory can be set via CHROMA_IN_MEMORY env var.
+        WHY:  Azure Container Apps uses environment variables for configuration.
+              This must work to enable in-memory mode in production.
+        """
+        with patch.dict(os.environ, {"CHROMA_IN_MEMORY": "true"}):
+            settings = Settings()
+            assert settings.chroma_in_memory is True

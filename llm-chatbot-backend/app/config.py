@@ -97,6 +97,13 @@ class Settings(BaseSettings):
         default="chatbot_docs",
         description="Name of the ChromaDB collection (like a table) for our documents",
     )
+    chroma_in_memory: bool = Field(
+        default=False,
+        description=(
+            "When True, use chromadb.EphemeralClient() (no disk persistence). "
+            "Set CHROMA_IN_MEMORY=true in Azure Container Apps for stateless deployments."
+        ),
+    )
     chroma_host: str = Field(
         default="localhost",
         description="ChromaDB server host (used when running ChromaDB as a service)",

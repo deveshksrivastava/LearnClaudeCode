@@ -70,6 +70,8 @@ async def chat(
     user_message = request_body.message
 
     logger.info(f"POST /chat-llm — session='{session_id}', message='{user_message[:60]}'")
+    logger.log(logging.DEBUG, f"DEVESH - POST /chat-llm — session='{session_id}', message='{user_message[:60]}'")
+    print(f"POST /chat-llm — session='{session_id}', message='{user_message[:60]}'")
 
     # Retrieve the compiled graph from app state (set during startup in main.py)
     compiled_graph = getattr(request.app.state, "compiled_graph", None)

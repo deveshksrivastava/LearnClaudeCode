@@ -21,15 +21,14 @@ logger = logging.getLogger(__name__)
 
 def get_chroma_client(settings: Settings) -> chromadb.ClientAPI:
     """
-    Creates and returns a ChromaDB persistent client.
+    Creates and returns a ChromaDB client.
 
-    WHY PERSISTENT CLIENT?
-      A persistent client saves the vector data to disk (at chroma_persist_path).
-      This means indexed documents survive restarts — you don't have to re-index
-      every time the server starts.
+    Uses EphemeralClient (in-memory) when settings.chroma_in_memory is True —
+    suitable for Azure Container Apps where disk state resets on restart.
+    Uses PersistentClient otherwise (local development with disk persistence).
 
     Args:
-        settings: Application settings containing the ChromaDB path.
+        settings: Application settings containing the ChromaDB configuration.
 
     Returns:
         chromadb.ClientAPI: A connected ChromaDB client.
@@ -38,13 +37,17 @@ def get_chroma_client(settings: Settings) -> chromadb.ClientAPI:
         Exception: If ChromaDB cannot initialise (e.g., bad path permissions).
     """
     try:
-        logger.info(f"Initialising ChromaDB at path: {settings.chroma_persist_path}")
-        client = chromadb.PersistentClient(
-            path=settings.chroma_persist_path,
-            settings=ChromaSettings(
-                anonymized_telemetry=False,  # Disable telemetry for privacy
-            ),
-        )
+        if settings.chroma_in_memory:
+            logger.info("Initialising ChromaDB as EphemeralClient (in-memory, no persistence)")
+            client = chromadb.EphemeralClient(
+                settings=ChromaSettings(anonymized_telemetry=False),
+            )
+        else:
+            logger.info(f"Initialising ChromaDB at path: {settings.chroma_persist_path}")
+            client = chromadb.PersistentClient(
+                path=settings.chroma_persist_path,
+                settings=ChromaSettings(anonymized_telemetry=False),
+            )
         logger.info("ChromaDB client initialised successfully")
         return client
     except Exception as e:
