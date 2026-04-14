@@ -41,6 +41,7 @@ openai>=1.30                   # Official OpenAI Python client (used by LangChai
 
 # ── Utilities ──────────────────────────────────────────────────────────────
 python-dotenv>=1.0             # Loads .env file into environment variables at startup
+python-multipart>=0.0.26       # Parses multipart/form-data for file uploads and form fields in FastAPI
 
 # ── Testing ────────────────────────────────────────────────────────────────
 pytest>=8.2                    # Test runner
