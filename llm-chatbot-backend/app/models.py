@@ -107,6 +107,22 @@ class IndexResponse(BaseModel):
     message: str = Field(description="Human-readable result message")
 
 
+# ── /api/v1/upload ───────────────────────────────────────────────────────────
+
+class UploadResponse(BaseModel):
+    """
+    Response body for POST /api/v1/upload.
+
+    Fields:
+        filename:       Original name of the uploaded file.
+        indexed_chunks: Number of text chunks stored in ChromaDB.
+        message:        Human-readable summary.
+    """
+    filename: str = Field(description="Name of the uploaded file")
+    indexed_chunks: int = Field(description="Number of document chunks stored in ChromaDB")
+    message: str = Field(description="Human-readable result message")
+
+
 # ── Error response (used in error handlers) ──────────────────────────────────
 
 class ErrorResponse(BaseModel):

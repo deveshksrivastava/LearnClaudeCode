@@ -95,9 +95,13 @@ Get-NetTCPConnection -LocalPort 8000 | ForEach-Object { Stop-Process -Id $_.Owni
  - Interactive docs: **http://127.0.0.1:8000/docs**
 
 ## Run Curls/runbackend
+```
 curl -s -X POST http://localhost:8002/api/v1/index -H 'Content-Type: application/json' -d '{"directory": "./data/sample_docs"}' 2>&1
-cd D:/sites/LearnClaudeCode/llm-chatbot-backend && venv/Scripts/python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
 
+cd llm-chatbot-backend/  && venv/Scripts/python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
+
+cd llm-chatbot-backend/ && venv/Scripts/python.exe -c "from app.models import UploadResponse; print('OK')"
+````
 
 ### Frontend Setup
 
