@@ -578,6 +578,20 @@
   border: 1px solid #d1d5db;
 }
 
+/* ── LLM Chat two-column layout (chat + right sidebar) ── */
+.llm-chat-with-sidebar {
+  display: flex;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.llm-chat-with-sidebar .chat-page {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
 /* ── Chat Page ── */
 .chat-page {
   display: flex;
@@ -775,5 +789,128 @@
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40%           { transform: translateY(-6px); }
+}
+
+/* ── Document panel (right sidebar on LLM Chat page) ── */
+.docs-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 1px solid #e5e5e5;
+  padding: 20px 16px;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.docs-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.docs-panel-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.docs-upload-btn {
+  padding: 5px 12px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.docs-upload-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.docs-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.docs-status {
+  font-size: 0.8rem;
+  border-radius: 6px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.docs-status--success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.docs-status--error {
+  background: #fff0f0;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.docs-empty {
+  font-size: 0.875rem;
+  color: #aaa;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.docs-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.docs-item-name {
+  flex: 1;
+  font-size: 0.825rem;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-delete-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.docs-delete-btn:hover:not(:disabled) {
+  color: #e74c3c;
+  background: #fff0ee;
+}
+
+.docs-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
