@@ -119,3 +119,31 @@ class ErrorResponse(BaseModel):
         detail: A human-readable error message.
     """
     detail: str = Field(description="Error message describing what went wrong")
+
+
+# ── /api/v1/upload ───────────────────────────────────────────────────────────
+
+class UploadResponse(BaseModel):
+    """Response body for POST /api/v1/upload."""
+    uploaded: list[str] = Field(description="Filenames that were saved to disk")
+    indexed: int = Field(description="Total document chunks now indexed in ChromaDB")
+    message: str = Field(description="Human-readable result message")
+
+
+# ── /api/v1/documents ────────────────────────────────────────────────────────
+
+class DocumentListResponse(BaseModel):
+    """Response body for GET /api/v1/documents."""
+    documents: list[str] = Field(
+        default_factory=list,
+        description="Filenames currently in data/sample_docs/",
+    )
+
+
+# ── /api/v1/documents/{filename} ─────────────────────────────────────────────
+
+class DeleteDocumentResponse(BaseModel):
+    """Response body for DELETE /api/v1/documents/{filename}."""
+    filename: str = Field(description="The deleted filename")
+    indexed: int = Field(description="Total document chunks indexed after deletion")
+    message: str = Field(description="Human-readable result message")
