@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from app.rag.document_loader import load_single_file
 from app.config import Settings
+from app.models import DocumentInfo, DocumentListResponse
 
 
 class TestHealthEndpoint:
@@ -185,6 +186,51 @@ class TestIndexEndpoint:
             json={},  # Missing 'directory'
         )
         assert response.status_code == 422
+
+
+class TestListDocumentsEndpoint:
+    """Tests for GET /api/v1/documents."""
+
+    def test_list_documents_returns_200(self, test_client):
+        """GET /api/v1/documents returns HTTP 200."""
+        response = test_client.get("/api/v1/documents")
+        assert response.status_code == 200
+
+    def test_list_documents_response_has_files_key(self, test_client):
+        """Response body contains a 'files' list."""
+        response = test_client.get("/api/v1/documents")
+        data = response.json()
+        assert "files" in data
+        assert isinstance(data["files"], list)
+
+    def test_list_documents_returns_empty_when_dir_missing(self, test_client):
+        """Returns empty list rather than 500 when UPLOAD_DIR does not exist."""
+        with patch("app.api.chat_router.UPLOAD_DIR", Path("/nonexistent/path")):
+            response = test_client.get("/api/v1/documents")
+        assert response.status_code == 200
+        assert response.json()["files"] == []
+
+    def test_list_documents_returns_file_metadata(self, test_client, tmp_path):
+        """Each entry has filename, size_bytes, and last_modified."""
+        (tmp_path / "hello.txt").write_text("some content")
+        with patch("app.api.chat_router.UPLOAD_DIR", tmp_path):
+            response = test_client.get("/api/v1/documents")
+        data = response.json()
+        assert len(data["files"]) == 1
+        entry = data["files"][0]
+        assert entry["filename"] == "hello.txt"
+        assert entry["size_bytes"] > 0
+        assert "last_modified" in entry
+
+    def test_list_documents_excludes_unsupported_extensions(self, test_client, tmp_path):
+        """Files with unsupported extensions are not included in the list."""
+        (tmp_path / "keep.txt").write_text("yes")
+        (tmp_path / "ignore.exe").write_text("no")
+        with patch("app.api.chat_router.UPLOAD_DIR", tmp_path):
+            response = test_client.get("/api/v1/documents")
+        filenames = [f["filename"] for f in response.json()["files"]]
+        assert "keep.txt" in filenames
+        assert "ignore.exe" not in filenames
 
 
 class TestLoadSingleFile:

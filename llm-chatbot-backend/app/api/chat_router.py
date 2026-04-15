@@ -8,10 +8,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 
-from app.models import ChatRequest, ChatResponse, IndexRequest, IndexResponse, UploadResponse
+from app.models import ChatRequest, ChatResponse, IndexRequest, IndexResponse, UploadResponse, DocumentInfo, DocumentListResponse
 from app.config import Settings, get_settings
 from app.graph.graph_builder import run_conversation_graph
 from app.rag.document_loader import load_documents_from_directory, load_single_file
@@ -306,3 +307,32 @@ async def upload_document(
             f"Note: uploading a file with the same name as an existing file will replace it."
         ),
     )
+
+
+@router.get(
+    "/documents",
+    response_model=DocumentListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="List uploaded documents",
+    description="Returns all .txt, .pdf, and .md files currently in the sample_docs folder.",
+)
+async def list_documents() -> DocumentListResponse:
+    """
+    GET /api/v1/documents — list uploaded files.
+
+    Scans UPLOAD_DIR and returns metadata for every supported file.
+    Returns an empty list if the directory does not exist yet.
+    """
+    if not UPLOAD_DIR.exists():
+        return DocumentListResponse(files=[])
+
+    files = []
+    for path in sorted(UPLOAD_DIR.iterdir()):
+        if path.is_file() and path.suffix.lower() in {".txt", ".pdf", ".md"}:
+            stat = path.stat()
+            files.append(DocumentInfo(
+                filename=path.name,
+                size_bytes=stat.st_size,
+                last_modified=datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            ))
+    return DocumentListResponse(files=files)

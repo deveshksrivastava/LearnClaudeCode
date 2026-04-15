@@ -465,6 +465,289 @@ git commit -m "feat: add POST /api/v1/upload endpoint with file validation and R
 
 ---
 
+## Task 4 — Add `GET /api/v1/documents` endpoint
+
+**Goal:** List all uploaded files currently on disk in `data/sample_docs/`.
+
+**Files:**
+- Modify: `app/models.py`
+- Modify: `app/api/chat_router.py`
+- Modify: `tests/test_chat_api.py`
+
+- [x] **Step 1: Add Pydantic models to `models.py`**
+
+  Add after `UploadResponse`:
+
+  ```python
+  class DocumentInfo(BaseModel):
+      filename: str = Field(description="Name of the file")
+      size_bytes: int = Field(description="File size in bytes")
+      last_modified: str = Field(description="ISO 8601 last-modified timestamp")
+
+  class DocumentListResponse(BaseModel):
+      files: list[DocumentInfo] = Field(description="Uploaded documents in sample_docs/")
+  ```
+
+- [x] **Step 2: Verify import works**
+
+  ```bash
+  venv/Scripts/python.exe -c "from app.models import DocumentInfo, DocumentListResponse; print('OK')"
+  ```
+
+- [x] **Step 3: Write the failing test** in `tests/test_chat_api.py`
+
+  ```python
+  class TestListDocumentsEndpoint:
+      """Tests for GET /api/v1/documents."""
+
+      def test_list_documents_returns_200(self, test_client):
+          """GET /api/v1/documents returns HTTP 200."""
+          response = test_client.get("/api/v1/documents")
+          assert response.status_code == 200
+
+      def test_list_documents_response_has_files_key(self, test_client):
+          """Response body contains a 'files' list."""
+          response = test_client.get("/api/v1/documents")
+          data = response.json()
+          assert "files" in data
+          assert isinstance(data["files"], list)
+
+      def test_list_documents_returns_empty_when_dir_missing(self, test_client):
+          """Returns empty list rather than 500 when UPLOAD_DIR does not exist."""
+          with patch("app.api.chat_router.UPLOAD_DIR", Path("/nonexistent/path")):
+              response = test_client.get("/api/v1/documents")
+          assert response.status_code == 200
+          assert response.json()["files"] == []
+  ```
+
+- [x] **Step 4: Run tests — expect 404 (endpoint not yet added)**
+
+  ```bash
+  venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestListDocumentsEndpoint -v
+  ```
+
+- [x] **Step 5: Implement the endpoint in `chat_router.py`**
+
+  Add after the `upload_document` endpoint:
+
+  ```python
+  @router.get(
+      "/documents",
+      response_model=DocumentListResponse,
+      status_code=status.HTTP_200_OK,
+      summary="List uploaded documents",
+      description="Returns all .txt, .pdf, and .md files currently in the sample_docs folder.",
+  )
+  async def list_documents() -> DocumentListResponse:
+      """
+      GET /api/v1/documents — list uploaded files.
+
+      Scans UPLOAD_DIR and returns metadata for every supported file.
+      Returns an empty list if the directory does not exist yet.
+      """
+      if not UPLOAD_DIR.exists():
+          return DocumentListResponse(files=[])
+
+      files = []
+      for path in sorted(UPLOAD_DIR.iterdir()):
+          if path.is_file() and path.suffix.lower() in {".txt", ".pdf", ".md"}:
+              stat = path.stat()
+              files.append(DocumentInfo(
+                  filename=path.name,
+                  size_bytes=stat.st_size,
+                  last_modified=datetime.fromtimestamp(stat.st_mtime).isoformat(),
+              ))
+      return DocumentListResponse(files=files)
+  ```
+
+  Also add to imports at the top of `chat_router.py`:
+  ```python
+  from datetime import datetime
+  from app.models import ..., DocumentInfo, DocumentListResponse
+  ```
+
+- [x] **Step 6: Run tests — expect pass**
+
+  ```bash
+  venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestListDocumentsEndpoint -v
+  ```
+
+- [x] **Step 7: Commit**
+
+  ```bash
+  git add app/models.py app/api/chat_router.py tests/test_chat_api.py
+  git commit -m "feat: add GET /api/v1/documents endpoint to list uploaded files"
+  ```
+
+---
+
+## Task 5 — Add `DELETE /api/v1/documents/{filename}` endpoint
+
+**Goal:** Delete a file from disk and remove its chunks from ChromaDB, then rebuild the live index.
+
+**Files:**
+- Modify: `app/api/chat_router.py`
+- Modify: `tests/test_chat_api.py`
+
+- [ ] **Step 1: Write the failing tests** in `tests/test_chat_api.py`
+
+  ```python
+  class TestDeleteDocumentEndpoint:
+      """Tests for DELETE /api/v1/documents/{filename}."""
+
+      def test_delete_returns_404_for_missing_file(self, test_client, tmp_path):
+          """Returns 404 when the file does not exist in UPLOAD_DIR."""
+          with patch("app.api.chat_router.UPLOAD_DIR", tmp_path):
+              response = test_client.delete("/api/v1/documents/ghost.txt")
+          assert response.status_code == 404
+
+      def test_delete_returns_400_for_path_traversal(self, test_client):
+          """Rejects filenames containing path separators."""
+          response = test_client.delete("/api/v1/documents/..%2F..%2Fetc%2Fpasswd")
+          assert response.status_code == 400
+
+      def test_delete_valid_file_returns_200(self, test_client, tmp_path):
+          """Deletes an existing file and returns 200."""
+          (tmp_path / "sample.txt").write_text("hello")
+          with patch("app.api.chat_router.UPLOAD_DIR", tmp_path), \
+               patch("app.api.chat_router.build_vector_store_index", return_value=MagicMock()):
+              response = test_client.delete("/api/v1/documents/sample.txt")
+          assert response.status_code == 200
+          assert not (tmp_path / "sample.txt").exists()
+
+      def test_delete_removes_chroma_chunks(self, test_client, tmp_path):
+          """ChromaDB delete is called with the IDs for the deleted file."""
+          (tmp_path / "doc.txt").write_text("content")
+          mock_collection = MagicMock()
+          mock_collection.get.return_value = {"ids": ["id1", "id2"]}
+          with patch("app.api.chat_router.UPLOAD_DIR", tmp_path), \
+               patch("app.api.chat_router.build_vector_store_index", return_value=MagicMock()):
+              test_client.app.state.chroma_collection = mock_collection
+              response = test_client.delete("/api/v1/documents/doc.txt")
+          mock_collection.delete.assert_called_once_with(ids=["id1", "id2"])
+          assert response.status_code == 200
+  ```
+
+- [ ] **Step 2: Run tests — expect 404/405 (endpoint not yet added)**
+
+  ```bash
+  venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestDeleteDocumentEndpoint -v
+  ```
+
+- [ ] **Step 3: Implement the endpoint in `chat_router.py`**
+
+  Add after `list_documents`:
+
+  ```python
+  @router.delete(
+      "/documents/{filename}",
+      status_code=status.HTTP_200_OK,
+      summary="Delete an uploaded document",
+      description="Removes the file from disk and its chunks from ChromaDB, then rebuilds the RAG index.",
+  )
+  async def delete_document(
+      filename: str,
+      request: Request,
+      settings: Settings = Depends(get_settings),
+  ) -> dict:
+      """
+      DELETE /api/v1/documents/{filename} — remove a file and its index entries.
+
+      WHAT THIS DOES:
+        1. Rejects filenames with path separators (prevent traversal)
+        2. Returns 404 if the file doesn't exist in UPLOAD_DIR
+        3. Queries ChromaDB for chunk IDs where file_name == filename
+        4. Deletes those chunks from ChromaDB (skips if none found)
+        5. Deletes the file from disk
+        6. Rebuilds app.state.vector_index
+
+      Raises:
+          HTTPException 400: Filename contains path separators.
+          HTTPException 404: File not found in UPLOAD_DIR.
+          HTTPException 500: Unexpected error during deletion.
+      """
+      # Guard against path traversal: Path("../etc/passwd").name == "passwd"
+      # but we also reject if the raw string contains separators
+      if filename != Path(filename).name or "/" in filename or "\\" in filename:
+          raise HTTPException(
+              status_code=status.HTTP_400_BAD_REQUEST,
+              detail="Invalid filename.",
+          )
+
+      file_path = UPLOAD_DIR / filename
+      if not file_path.is_file():
+          raise HTTPException(
+              status_code=status.HTTP_404_NOT_FOUND,
+              detail=f"'{filename}' not found.",
+          )
+
+      try:
+          # Remove chunks from ChromaDB — use app.state collection so it's always fresh
+          collection = getattr(request.app.state, "chroma_collection", None)
+          if collection is not None:
+              results = collection.get(where={"file_name": {"$eq": filename}})
+              ids = results.get("ids") or []
+              if ids:
+                  collection.delete(ids=ids)
+                  logger.info(f"Deleted {len(ids)} chunk(s) for '{filename}' from ChromaDB")
+
+          # Delete the file from disk
+          file_path.unlink()
+          logger.info(f"Deleted file: {file_path}")
+
+          # Rebuild the live index (may become None if collection is now empty)
+          if collection is not None:
+              request.app.state.vector_index = build_vector_store_index(collection)
+
+      except HTTPException:
+          raise
+      except Exception as e:
+          logger.error(f"Delete failed for '{filename}': {e}", exc_info=True)
+          raise HTTPException(
+              status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+              detail=f"Delete failed: {str(e)}",
+          )
+
+      return {"filename": filename, "message": f"'{filename}' deleted successfully."}
+  ```
+
+- [ ] **Step 4: Run tests — expect pass**
+
+  ```bash
+  venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestDeleteDocumentEndpoint -v
+  ```
+
+- [ ] **Step 5: Run full test suite**
+
+  ```bash
+  venv/Scripts/python.exe -m pytest tests/ -v
+  ```
+
+  Expected: all existing tests still pass.
+
+- [ ] **Step 6: Commit**
+
+  ```bash
+  git add app/api/chat_router.py tests/test_chat_api.py
+  git commit -m "feat: add DELETE /api/v1/documents/{filename} endpoint"
+  ```
+
+---
+
+## Likely Failure Points (Tasks 4 & 5)
+
+1. **ChromaDB `where` filter syntax** — In ChromaDB 1.x the filter must use operator form: `{"file_name": {"$eq": filename}}`. The plain dict form `{"file_name": filename}` may raise a validation error. Always use the operator form.
+
+2. **File on disk but no ChromaDB entries** — Indexing may have failed silently on a previous upload. Delete must still succeed: delete the disk file regardless of whether `ids` is empty. Never make disk deletion conditional on ChromaDB having entries.
+
+3. **Empty collection after last file deleted** — `build_vector_store_index()` returns `None` when the collection is empty. This is correct — assign `None` to `app.state.vector_index`. The `/chat-llm` endpoint already handles a `None` index (no RAG, falls back to LLM only).
+
+4. **Path traversal** — URL-encoded slashes (`..%2F`) are decoded by FastAPI before the path parameter reaches the handler. Check `Path(filename).name == filename` AND scan for raw `/` and `\` in the string.
+
+5. **`UPLOAD_DIR` missing on `GET /documents`** — Guard with `if not UPLOAD_DIR.exists(): return DocumentListResponse(files=[])` before calling `.iterdir()`.
+
+---
+
 ## Self-review checklist
 
 - [x] `UploadResponse` model defined before it is used in the endpoint

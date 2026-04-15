@@ -123,6 +123,20 @@ class UploadResponse(BaseModel):
     message: str = Field(description="Human-readable result message")
 
 
+# ── /api/v1/documents ────────────────────────────────────────────────────────
+
+class DocumentInfo(BaseModel):
+    """Metadata for a single uploaded file."""
+    filename: str = Field(description="Name of the file")
+    size_bytes: int = Field(description="File size in bytes")
+    last_modified: str = Field(description="ISO 8601 last-modified timestamp")
+
+
+class DocumentListResponse(BaseModel):
+    """Response body for GET /api/v1/documents."""
+    files: list[DocumentInfo] = Field(description="Uploaded documents in sample_docs/")
+
+
 # ── Error response (used in error handlers) ──────────────────────────────────
 
 class ErrorResponse(BaseModel):
