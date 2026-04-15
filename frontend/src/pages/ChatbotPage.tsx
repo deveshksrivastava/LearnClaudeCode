@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { sendMessage, newSessionId, type ChatMessage } from '../api/chatbotApi';
+import { sendMessage, newSessionId, uploadDocument, type ChatMessage } from '../api/chatbotApi';
 
 const SESSION_KEY = 'chatbot_session_id';
 
@@ -10,6 +10,12 @@ export default function ChatbotPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Upload state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Restore or create a session ID on mount
   useEffect(() => {
@@ -54,6 +60,22 @@ export default function ChatbotPage() {
     setError('');
   }
 
+  async function handleUpload() {
+    if (!uploadFile || uploading) return;
+    setUploading(true);
+    setUploadStatus(null);
+    try {
+      const data = await uploadDocument(uploadFile);
+      setUploadStatus({ ok: true, msg: `"${data.filename}" indexed as ${data.indexed_chunks} chunk(s).` });
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      setUploadStatus({ ok: false, msg: err instanceof Error ? err.message : 'Upload failed.' });
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -68,6 +90,36 @@ export default function ChatbotPage() {
         <button className="chat-clear-btn" onClick={startNewConversation} disabled={loading}>
           New conversation LMCHATING
         </button>
+      </div>
+
+      {/* Upload strip */}
+      <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+        <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 bg-gray-50 cursor-pointer hover:border-indigo-400 hover:text-indigo-500 transition-colors max-w-xs truncate">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.pdf,.md"
+            className="sr-only"
+            onChange={(e) => {
+              setUploadFile(e.target.files?.[0] ?? null);
+              setUploadStatus(null);
+            }}
+            disabled={uploading}
+          />
+          {uploadFile ? uploadFile.name : 'Choose .txt / .pdf / .md…'}
+        </label>
+        <button
+          className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          onClick={handleUpload}
+          disabled={!uploadFile || uploading}
+        >
+          {uploading ? 'Uploading…' : 'Upload'}
+        </button>
+        {uploadStatus && (
+          <span className={`text-xs px-3 py-1 rounded-full font-medium ${uploadStatus.ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            {uploadStatus.msg}
+          </span>
+        )}
       </div>
 
       <div className="chat-window">

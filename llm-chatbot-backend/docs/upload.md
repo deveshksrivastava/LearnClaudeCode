@@ -45,7 +45,7 @@ No new files. Everything extends the existing structure.
 **Files:**
 - Modify: `app/models.py`
 
-- [ ] **Step 1: Add the model to `models.py`** after the `IndexResponse` class
+- [x] **Step 1: Add the model to `models.py`** after the `IndexResponse` class
 
 ```python
 class UploadResponse(BaseModel):
@@ -62,7 +62,7 @@ class UploadResponse(BaseModel):
     message: str = Field(description="Human-readable result message")
 ```
 
-- [ ] **Step 2: Verify import works**
+- [x] **Step 2: Verify import works**
 
 ```bash
 cd llm-chatbot-backend
@@ -71,7 +71,7 @@ venv/Scripts/python.exe -c "from app.models import UploadResponse; print('OK')"
 
 Expected: `OK`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/models.py
@@ -86,7 +86,7 @@ git commit -m "feat: add UploadResponse model"
 - Modify: `app/rag/document_loader.py`
 - Test: `tests/test_chat_api.py` (temporary — move to dedicated file if preferred)
 
-- [ ] **Step 1: Write the failing test** in `tests/test_chat_api.py`
+- [x] **Step 1: Write the failing test** in `tests/test_chat_api.py`
 
 ```python
 import tempfile
@@ -147,7 +147,7 @@ class TestLoadSingleFile:
             load_single_file(str(bad_file), mock_collection, settings)
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 cd llm-chatbot-backend
@@ -156,7 +156,7 @@ venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestLoadSingleFile -v
 
 Expected: `ImportError` or `AttributeError` — `load_single_file` does not exist yet.
 
-- [ ] **Step 3: Implement `load_single_file()` in `document_loader.py`**
+- [x] **Step 3: Implement `load_single_file()` in `document_loader.py`**
 
 Add after the existing `load_documents_from_directory` function:
 
@@ -224,7 +224,7 @@ def load_single_file(
         raise
 ```
 
-- [ ] **Step 4: Run tests — expect pass**
+- [x] **Step 4: Run tests — expect pass**
 
 ```bash
 venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestLoadSingleFile -v
@@ -232,7 +232,7 @@ venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestLoadSingleFile -v
 
 Expected: all 3 tests `PASSED`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/rag/document_loader.py tests/test_chat_api.py
@@ -247,7 +247,7 @@ git commit -m "feat: add load_single_file() for per-file RAG indexing"
 - Modify: `app/api/chat_router.py`
 - Modify: `tests/test_chat_api.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add `TestUploadEndpoint` to `tests/test_chat_api.py`:
 
@@ -299,7 +299,7 @@ class TestUploadEndpoint:
         assert response.status_code == 400
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestUploadEndpoint -v
@@ -307,7 +307,7 @@ venv/Scripts/python.exe -m pytest tests/test_chat_api.py::TestUploadEndpoint -v
 
 Expected: `404 Not Found` — endpoint doesn't exist yet.
 
-- [ ] **Step 3: Add the upload endpoint to `chat_router.py`**
+- [x] **Step 3: Add the upload endpoint to `chat_router.py`**
 
 Add these imports at the top of `chat_router.py`:
 
@@ -432,7 +432,7 @@ async def upload_document(
     )
 ```
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 ```bash
 venv/Scripts/python.exe -m pytest tests/ -v
@@ -440,7 +440,7 @@ venv/Scripts/python.exe -m pytest tests/ -v
 
 Expected: all existing tests still pass; all 4 `TestUploadEndpoint` tests pass.
 
-- [ ] **Step 5: Manual smoke test against the running server**
+- [x] **Step 5: Manual smoke test against the running server**
 
 ```bash
 curl -X POST http://localhost:8002/api/v1/upload \
@@ -456,7 +456,7 @@ Expected response shape:
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/api/chat_router.py app/models.py tests/test_chat_api.py
