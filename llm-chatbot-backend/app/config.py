@@ -131,11 +131,11 @@ class Settings(BaseSettings):
 
     # ── RAG settings ───────────────────────────────────────────────────────
     rag_top_k: int = Field(
-        default=6,
+        default=10,
         description="How many document chunks to retrieve from ChromaDB per query",
     )
     rag_chunk_size: int = Field(
-        default=512,
+        default=256,
         description="Size of each text chunk (in tokens) when splitting documents",
     )
     rag_chunk_overlap: int = Field(
