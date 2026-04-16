@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { sendMessage, newSessionId, uploadDocument, type ChatMessage } from '../api/chatbotApi';
+import { sendMessage, newSessionId, uploadDocument, listDocuments, type ChatMessage, type DocumentInfo } from '../api/chatbotApi';
 
 const SESSION_KEY = 'chatbot_session_id';
 
@@ -17,6 +17,10 @@ export default function ChatbotPage() {
   const [uploadStatus, setUploadStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Documents list state
+  const [docs, setDocs] = useState<DocumentInfo[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+
   // Restore or create a session ID on mount
   useEffect(() => {
     const saved = sessionStorage.getItem(SESSION_KEY);
@@ -24,6 +28,20 @@ export default function ChatbotPage() {
     if (!saved) sessionStorage.setItem(SESSION_KEY, id);
     setSessionId(id);
   }, []);
+
+  async function fetchDocs() {
+    setDocsLoading(true);
+    try {
+      setDocs(await listDocuments());
+    } catch {
+      // silently ignore — chat still works without the list
+    } finally {
+      setDocsLoading(false);
+    }
+  }
+
+  // Load document list on mount
+  useEffect(() => { fetchDocs(); }, []);
 
   // Auto-scroll whenever messages or loading state changes
   useEffect(() => {
@@ -69,6 +87,7 @@ export default function ChatbotPage() {
       setUploadStatus({ ok: true, msg: `"${data.filename}" indexed as ${data.indexed_chunks} chunk(s).` });
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      fetchDocs();
     } catch (err) {
       setUploadStatus({ ok: false, msg: err instanceof Error ? err.message : 'Upload failed.' });
     } finally {
@@ -119,6 +138,37 @@ export default function ChatbotPage() {
           <span className={`text-xs px-3 py-1 rounded-full font-medium ${uploadStatus.ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {uploadStatus.msg}
           </span>
+        )}
+      </div>
+
+      {/* Indexed documents list */}
+      <div className="flex-shrink-0 border border-gray-200 rounded-xl bg-white px-4 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Indexed Documents</span>
+          <button
+            onClick={fetchDocs}
+            disabled={docsLoading}
+            className="text-xs text-indigo-500 hover:text-indigo-700 disabled:opacity-40"
+          >
+            {docsLoading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+        {docs.length === 0 ? (
+          <p className="text-xs text-gray-400">{docsLoading ? 'Loading…' : 'No documents indexed yet.'}</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {docs.map((doc) => (
+              <li
+                key={doc.filename}
+                className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-3 py-1 text-xs text-gray-700"
+                title={`${(doc.size_bytes / 1024).toFixed(1)} KB · ${new Date(doc.last_modified).toLocaleString()}`}
+              >
+                <span>📄</span>
+                <span>{doc.filename}</span>
+                <span className="text-gray-400">({(doc.size_bytes / 1024).toFixed(1)} KB)</span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

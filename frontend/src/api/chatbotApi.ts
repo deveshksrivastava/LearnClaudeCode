@@ -27,6 +27,20 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   return res.json() as Promise<UploadResponse>;
 }
 
+export interface DocumentInfo {
+  filename: string;
+  size_bytes: number;
+  last_modified: string;
+}
+
+/** Fetch the list of uploaded documents from the backend. */
+export async function listDocuments(): Promise<DocumentInfo[]> {
+  const res = await fetch(`${CHATBOT_URL}/api/v1/documents`);
+  if (!res.ok) throw new Error('Failed to load documents');
+  const data = await res.json() as { files: DocumentInfo[] };
+  return data.files;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
