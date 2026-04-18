@@ -15,7 +15,7 @@ A full-stack e-commerce application built with **FastAPI** (Python) on the backe
 
 ---
 
-## Project Structure
+## Project Structure Demo
 
 ```
 LearnClaudeCode/
