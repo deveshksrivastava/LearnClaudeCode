@@ -1,0 +1,70 @@
+Company Return and Refund Policy
+
+Last Updated: January 2026
+
+1. Standard Return Policy
+We offer a 30-day return policy on all products. Items must be returned in their original condition, unused, and with all original packaging. To initiate a return, contact our customer service team at support@example.com or call 1-800-555-0100.
+
+2. Electronics Return Policy
+Electronics have a 15-day return window due to rapid value depreciation. All electronics must be returned with original accessories, manuals, and packaging. Defective electronics may be exchanged within 90 days of purchase.
+
+3. Refund Processing
+Refunds are processed within 5-7 business days after we receive and inspect the returned item. The refund will be applied to the original payment method. Credit card refunds may take an additional 3-5 business days to appear on your statement.
+
+4. Non-Returnable Items
+The following items cannot be returned:
+- Downloadable software and digital products
+- Perishable goods
+- Customised or personalised items
+- Hazardous materials
+- Gift cards
+
+5. Shipping Costs
+Original shipping costs are non-refundable. Return shipping costs are the responsibility of the customer unless the item arrived damaged or defective. We provide prepaid return labels for defective items.
+
+6. Exchange Policy
+We offer free exchanges for the same item in a different size or colour. Exchanges for different products are processed as a return and new purchase.
+
+7. Warranty Claims
+All products include a 1-year manufacturer warranty. Extended warranties are available for purchase. Warranty claims must be submitted with proof of purchase. Warranty covers manufacturing defects only and does not cover damage from misuse or accidents.
+
+8. Contact Information
+Customer Service: support@example.com
+Phone: 1-800-555-0100
+Hours: Monday-Friday, 9 AM - 6 PM EST
+Live Chat: Available on our website during business hours
+
+
+Top 10 tips — Large language models
+Here are all 10 tips explained individually.
+
+Understand tokenisation first
+LLMs don't process words — they process tokens, which are chunks of characters that may or may not align with word boundaries. "tokenisation" might split into token + isation. This is why LLMs struggle with tasks like counting letters, reversing strings, or doing arithmetic — they never see the raw characters. Understanding this also directly affects your costs, since every API provider bills by input + output tokens, not words. It also explains context limits: a 200,000 token context window is not the same as 200,000 words.
+
+Respect the context window
+The context window is everything the model can "see" at once — your system prompt, conversation history, retrieved documents, and the user's message all count against it. Once you exceed the limit, the model either errors out or silently drops older content. For production systems this means you must actively manage what goes into context: summarise old history, retrieve only the most relevant chunks from your vector store, and keep system prompts tight. RAG architectures exist primarily to solve this problem — instead of putting an entire knowledge base in context, you retrieve only what's relevant per request.
+
+Tune temperature with purpose
+Temperature controls how deterministic the model's output is. At temperature 0, the model always picks the highest-probability next token, giving you consistent, reproducible output. As temperature increases toward 1 and beyond, lower-probability tokens get more chance of being selected, producing more varied and creative output. The practical rule: use low temperature (0–0.3) for extraction, classification, structured output, and factual Q&A. Use higher temperature (0.6–0.9) for brainstorming, creative writing, or generating diverse options. Leaving it at default without thinking is a common mistake — it's often tuned too high for tasks that need precision.
+
+Prompt engineering is engineering
+The system prompt is code. It determines the model's persona, constraints, output format, tone, and reasoning approach. A poorly written system prompt causes inconsistent outputs at scale and is the root cause of most production LLM quality issues. Best practices include: version control your prompts in Git, write few-shot examples for edge cases, use chain-of-thought instructions ("Think step by step before answering"), specify exact output formats (JSON schema, markdown structure), and separate instructions from data clearly. Treat prompt changes the same way you treat code changes — test them, review them, and deploy them deliberately.
+
+Use RAG before fine-tuning
+This is one of the most misunderstood decisions in applied LLM work. Fine-tuning teaches the model new behaviour or style — it does not reliably inject new facts. If you want the model to answer questions about your internal documents, policy manuals, or product data, RAG is the right tool: embed your documents, store vectors, retrieve at query time, inject into context. Fine-tuning is appropriate when you need a consistent tone, output format, or task-specific behaviour that you can't achieve through prompting alone. It's expensive, slow to iterate, and the fine-tuned knowledge degrades over time as your data changes. RAG is always the first option to try.
+
+Hallucination is structural, not a bug
+LLMs are next-token predictors. They produce fluent, plausible text — but plausible is not the same as accurate. The model has no internal "truth checker." This is a fundamental architectural property, not something that gets fixed in the next model version. In production, you mitigate it by: always grounding answers in retrieved context, instructing the model to say "I don't know" when context is insufficient, asking it to cite specific sources, building validation layers that check outputs against known facts, and flagging low-confidence responses for human review. Never deploy a system where hallucinated output causes serious consequences without a mitigation layer.
+
+Embeddings encode meaning, not keywords
+An embedding model converts text into a high-dimensional vector where semantically similar passages cluster together in vector space. "vehicle speed limit" and "maximum car velocity" will be close in vector space even though they share no keywords. This is what makes semantic search over your knowledge base possible — your RAG pipeline finds conceptually relevant chunks even when the user's phrasing doesn't match the document's exact wording. The quality of your embedding model is therefore a direct multiplier on your RAG retrieval quality. text-embedding-3-large from OpenAI and embed-english-v3.0 from Cohere are strong production choices. Never use keyword search alone for RAG retrieval.
+
+Evaluate with RAGAS and evals
+You cannot improve what you don't measure. For RAG pipelines, RAGAS gives you four key metrics: faithfulness (does the answer stick to the retrieved context?), answer relevancy (does the answer address the question?), context precision (were the retrieved chunks actually useful?), and context recall (did retrieval surface all necessary information?). Beyond RAGAS, build a golden dataset — a set of 50–200 representative questions with known correct answers — and run it on every prompt change or model upgrade. Without this, you're flying blind. LangSmith and Weights & Biases both integrate well with LangChain for running evals in CI pipelines.
+
+Agents need determinism guards
+LLM agents work by giving the model a set of tools and letting it decide which tools to call and in what order. The problem is that non-determinism compounds across steps — a wrong decision in step 2 can cascade into a completely broken outcome by step 6. In production, always implement: a maximum step limit to prevent infinite loops, retry logic with exponential backoff for tool failures, explicit human-in-the-loop gates before any irreversible action (sending emails, writing to a database, making API calls with side effects), and structured logging of every tool call and decision. LangGraph is well-suited for this because it models agent state explicitly and lets you add conditional edges and interrupt points in the graph.
+
+Cost optimisation is a first-class concern
+Token costs scale linearly with usage, and usage grows non-linearly once a feature gets traction. The practical approach is: use smaller models for simple subtasks (routing, classification, extraction), enable prompt caching for repeated system prompts and RAG context, implement semantic caching to skip API calls for similar queries, use batch APIs for non-real-time workloads at a ~50% discount, and track cost per user session from day one using LangSmith or Helicone. Set hard spend alerts at 50%, 80%, and 100% of your monthly budget. A single runaway agent loop or a viral feature with no rate limits can generate thousands of API calls in minutes — you need guardrails before you need them.
+
