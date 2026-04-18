@@ -32,7 +32,7 @@ from app.rag.document_loader import load_documents_from_directory, SUPPORTED_EXT
 from app.rag.vector_store import get_chroma_client, get_or_create_collection, build_vector_store_index
 from app.graph.graph_builder import build_conversation_graph
 from app.api import chat_router, health_router
-
+from llama_index.core.utils import globals_helper
 
 def configure_logging(log_level: str) -> None:
     """
@@ -84,7 +84,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # By triggering wait_for_nltk_check() here we ensure nltk and its bundled
         # punkt_tab/stopwords data are on the NLTK path before any request arrives.
         logger.info("Pre-initialising NLTK data...")
-        from llama_index.core.utils import globals_helper
         globals_helper.wait_for_nltk_check()
         logger.info("NLTK data ready.")
 
