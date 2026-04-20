@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORIES, type Category } from '../data/categories';
+import { CATEGORIES, type Category, type TableRow } from '../data/categories';
 
 export default function CategoriesPage() {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [activeModal, setActiveModal] = useState<'products' | 'sales' | null>(null);
 
   function closePanel() {
     setActiveCategory(null);
   }
 
+  function closeModal() {
+    setActiveModal(null);
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') closePanel();
+      if (e.key === 'Escape') { closePanel(); closeModal(); }
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -141,6 +146,89 @@ export default function CategoriesPage() {
         }`}
       />
 
+      {/* ── MODAL BACKDROP ── */}
+      <div
+        onClick={closeModal}
+        className={`fixed inset-0 z-20 bg-black/40 transition-opacity duration-300 ${
+          activeModal ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      />
+
+      {/* ── FULL-SCREEN MODAL ── */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-30 bg-white flex flex-col transition-transform duration-300 ease-out rounded-t-2xl shadow-2xl ${
+          activeModal ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ top: '20%' }}
+      >
+        {activeModal && activeCategory && (() => {
+          const isProducts = activeModal === 'products';
+          const rows: TableRow[] = isProducts ? activeCategory.productSummary : activeCategory.salesSummary;
+          return (
+            <>
+              <div className="flex justify-center py-3 border-b border-gray-100 shrink-0">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${isProducts ? 'bg-indigo-50' : 'bg-amber-50'}`}>
+                    {isProducts ? '📦' : '📊'}
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {isProducts ? 'Products' : 'Sales'} — {activeCategory.name}
+                    </h2>
+                    <p className="text-xs text-gray-400">Category data summary</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto p-4">
+                <table className="border-collapse text-xs w-full" style={{ minWidth: '900px' }}>
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-500 uppercase tracking-wide">
+                      <th className="sticky left-0 bg-gray-100 px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Field</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Description</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Type</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Source</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Unit</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Reference Flag</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Reference Value</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Data Flag</th>
+                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Attribute</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, i) => (
+                      <tr key={i} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="sticky left-0 bg-inherit px-4 py-2.5 font-semibold text-gray-700 border border-gray-200 whitespace-nowrap">{row.field}</td>
+                        <td className="px-4 py-2.5 text-gray-600 border border-gray-200">{row.description}</td>
+                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.type}</td>
+                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.source}</td>
+                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.unit || '—'}</td>
+                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.referenceFlag}</td>
+                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.referenceValue}</td>
+                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.dataFlag}</td>
+                        <td className="px-4 py-2.5 text-gray-600 border border-gray-200 whitespace-nowrap">{row.attribute}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          );
+        })()}
+      </div>
+
       {/* ── RIGHT DETAIL PANEL ── */}
       <aside
         className={`absolute top-0 right-0 h-full w-80 bg-white border-l border-gray-200 z-20 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${
@@ -194,6 +282,26 @@ export default function CategoriesPage() {
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <p className="text-xs text-gray-400 mb-1">Items</p>
                   <span className="text-sm font-semibold text-gray-700">{activeCategory.itemCount}</span>
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Data Summary</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setActiveModal('products')}
+                    className="flex-1 flex flex-col items-center gap-2 p-3 border border-gray-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50 transition"
+                  >
+                    <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-base">📦</div>
+                    <span className="text-xs font-medium text-gray-600">Products</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveModal('sales')}
+                    className="flex-1 flex flex-col items-center gap-2 p-3 border border-gray-200 rounded-xl hover:border-amber-300 hover:bg-amber-50 transition"
+                  >
+                    <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-base">📊</div>
+                    <span className="text-xs font-medium text-gray-600">Sales</span>
+                  </button>
                 </div>
               </div>
 

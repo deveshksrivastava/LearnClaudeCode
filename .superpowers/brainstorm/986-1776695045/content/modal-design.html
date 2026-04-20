@@ -1,0 +1,146 @@
+<h2>Data Summary — Full Design Mockup</h2>
+<p class="subtitle">Two states: icon in the right panel, and the full-app bottom-to-top modal</p>
+
+<div class="section">
+  <span class="label">Part 1 — "Data Summary" section inside the right panel (before Colour)</span>
+  <div class="mockup" style="margin-top:10px;">
+    <div class="mockup-header">Right Detail Panel — Data Summary section</div>
+    <div class="mockup-body" style="padding:14px;max-width:280px;">
+
+      <!-- Description (existing) -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:8px;color:#9ca3af;font-weight:700;letter-spacing:.05em;margin-bottom:4px;">DESCRIPTION</div>
+        <div style="font-size:9px;color:#6b7280;line-height:1.5;">Smartphones, laptops, tablets and accessories…</div>
+      </div>
+
+      <!-- Status + Items (existing) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+        <div style="background:#f9fafb;border-radius:8px;padding:8px;border:1px solid #e5e7eb;">
+          <div style="font-size:7px;color:#9ca3af;margin-bottom:2px;">Status</div>
+          <div style="font-size:9px;font-weight:600;color:#10b981;">Active</div>
+        </div>
+        <div style="background:#f9fafb;border-radius:8px;padding:8px;border:1px solid #e5e7eb;">
+          <div style="font-size:7px;color:#9ca3af;margin-bottom:2px;">Items</div>
+          <div style="font-size:9px;font-weight:600;color:#374151;">24</div>
+        </div>
+      </div>
+
+      <!-- ★ NEW: Data Summary section -->
+      <div style="margin-bottom:12px;border:2px dashed #6366f1;border-radius:10px;padding:10px;background:#fafafa;">
+        <div style="font-size:8px;color:#9ca3af;font-weight:700;letter-spacing:.05em;margin-bottom:8px;">DATA SUMMARY</div>
+        <div style="display:flex;gap:8px;">
+
+          <!-- Icon 1: Products -->
+          <button style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:10px 6px;text-align:center;background:#fff;cursor:pointer;transition:all .2s;">
+            <div style="width:32px;height:32px;background:#eef2ff;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;font-size:16px;">📦</div>
+            <div style="font-size:9px;font-weight:600;color:#374151;">Products</div>
+            <div style="font-size:7px;color:#9ca3af;margin-top:1px;">View data</div>
+          </button>
+
+          <!-- Icon 2: Sales -->
+          <button style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:10px 6px;text-align:center;background:#fff;cursor:pointer;transition:all .2s;">
+            <div style="width:32px;height:32px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;font-size:16px;">📊</div>
+            <div style="font-size:9px;font-weight:600;color:#374151;">Sales</div>
+            <div style="font-size:7px;color:#9ca3af;margin-top:1px;">View data</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Colour (existing, now below Data Summary) -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:8px;color:#9ca3af;font-weight:700;letter-spacing:.05em;margin-bottom:6px;">COLOUR</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#6366f1;border:1px solid #e5e7eb;"></div>
+          <span style="font-size:9px;color:#6b7280;font-family:monospace;">#6366f1</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <span class="label">Part 2 — Full-app modal sliding up from the bottom</span>
+  <div class="mockup" style="margin-top:10px;">
+    <div class="mockup-header">Full application view — modal open (slides from bottom)</div>
+    <div class="mockup-body" style="padding:0;position:relative;height:280px;overflow:hidden;">
+
+      <!-- App background (dimmed) -->
+      <div style="position:absolute;inset:0;background:#000;opacity:.4;z-index:1;"></div>
+
+      <!-- Blurred app content behind -->
+      <div style="position:absolute;inset:0;display:flex;z-index:0;">
+        <div style="width:100px;background:#fff;border-right:1px solid #e5e7eb;padding:8px;">
+          <div style="font-size:8px;color:#9ca3af;margin-bottom:4px;">MAIN</div>
+          <div style="background:#eef2ff;border-radius:4px;padding:4px 6px;font-size:8px;color:#6366f1;margin-bottom:3px;">🗂️ Categories</div>
+          <div style="border-radius:4px;padding:4px 6px;font-size:8px;color:#6b7280;">🏠 Dashboard</div>
+        </div>
+        <div style="flex:1;background:#f9fafb;padding:10px;">
+          <div style="display:flex;gap:6px;">
+            <div style="width:70px;background:#fff;border:1px solid #6366f1;border-radius:6px;padding:6px;font-size:9px;color:#374151;">📦 Electronics</div>
+            <div style="width:70px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;font-size:9px;color:#6b7280;">👗 Fashion</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ★ Bottom-to-top modal — center of screen -->
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:85%;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.25);z-index:2;padding:16px;">
+
+        <!-- Drag handle -->
+        <div style="width:36px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 12px;"></div>
+
+        <!-- Modal header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:24px;height:24px;background:#eef2ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">📦</div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#111827;">Products — Electronics</div>
+              <div style="font-size:8px;color:#9ca3af;">Category data summary</div>
+            </div>
+          </div>
+          <div style="font-size:14px;color:#9ca3af;cursor:pointer;">✕</div>
+        </div>
+
+        <!-- Table -->
+        <table style="width:100%;border-collapse:collapse;font-size:9px;">
+          <thead>
+            <tr style="background:#f3f4f6;border-radius:8px;">
+              <th style="padding:5px 8px;text-align:left;color:#6b7280;font-weight:600;border-radius:6px 0 0 6px;">Metric</th>
+              <th style="padding:5px 8px;text-align:left;color:#6b7280;font-weight:600;">Value</th>
+              <th style="padding:5px 8px;text-align:left;color:#6b7280;font-weight:600;border-radius:0 6px 6px 0;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:5px 8px;color:#374151;">Total Items</td>
+              <td style="padding:5px 8px;font-weight:600;color:#6366f1;">24</td>
+              <td style="padding:5px 8px;"><span style="background:#d1fae5;color:#065f46;font-size:7px;padding:2px 5px;border-radius:10px;">Good</span></td>
+            </tr>
+            <tr style="background:#fafafa;border-bottom:1px solid #f3f4f6;">
+              <td style="padding:5px 8px;color:#374151;">Category</td>
+              <td style="padding:5px 8px;color:#374151;">Electronics</td>
+              <td style="padding:5px 8px;"><span style="background:#d1fae5;color:#065f46;font-size:7px;padding:2px 5px;border-radius:10px;">Active</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:5px 8px;color:#374151;">Tags</td>
+              <td style="padding:5px 8px;color:#374151;">tech, gadgets, devices</td>
+              <td style="padding:5px 8px;">—</td>
+            </tr>
+            <tr style="background:#fafafa;">
+              <td style="padding:5px 8px;color:#374151;">Colour</td>
+              <td style="padding:5px 8px;font-family:monospace;color:#374151;">#6366f1</td>
+              <td style="padding:5px 8px;"><div style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block;"></div></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:10px;text-align:right;">
+          <button style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:9px;font-weight:600;cursor:pointer;">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p style="font-size:12px;color:#6b7280;margin-top:16px;">Does this look right? Reply in terminal to confirm or request changes.</p>
