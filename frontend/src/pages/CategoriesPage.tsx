@@ -5,6 +5,7 @@ import { CATEGORIES, type Category, type TableRow } from '../data/categories';
 export default function CategoriesPage() {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [activeModal, setActiveModal] = useState<'products' | 'sales' | null>(null);
+  const [transposed, setTransposed] = useState(false);
 
   function closePanel() {
     setActiveCategory(null);
@@ -12,6 +13,7 @@ export default function CategoriesPage() {
 
   function closeModal() {
     setActiveModal(null);
+    setTransposed(false);
   }
 
   useEffect(() => {
@@ -156,73 +158,117 @@ export default function CategoriesPage() {
 
       {/* ── FULL-SCREEN MODAL ── */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-30 bg-white flex flex-col transition-transform duration-300 ease-out rounded-t-2xl shadow-2xl ${
+        className={`fixed inset-x-0 bottom-0 z-30 flex flex-col transition-transform duration-300 ease-out shadow-2xl ${
           activeModal ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={{ top: '20%' }}
+        style={{ top: '20%', background: '#fff' }}
       >
         {activeModal && activeCategory && (() => {
           const isProducts = activeModal === 'products';
           const rows: TableRow[] = isProducts ? activeCategory.productSummary : activeCategory.salesSummary;
+          const colHeaders = ['Description', 'Type', 'Source Name', 'Unit', 'Reference Flag', 'Reference Value', 'Data Flag', 'Attribute'];
+          const colKeys: (keyof TableRow)[] = ['description', 'type', 'source', 'unit', 'referenceFlag', 'referenceValue', 'dataFlag', 'attribute'];
+
           return (
             <>
-              <div className="flex justify-center py-3 border-b border-gray-100 shrink-0">
-                <div className="w-10 h-1 bg-gray-300 rounded-full" />
-              </div>
-
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${isProducts ? 'bg-indigo-50' : 'bg-amber-50'}`}>
-                    {isProducts ? '📦' : '📊'}
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-semibold text-gray-800">
-                      {isProducts ? 'Products' : 'Sales'} — {activeCategory.name}
-                    </h2>
-                    <p className="text-xs text-gray-400">Category data summary</p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              {/* ① Breadcrumb bar — folder icon / NAME / SCHEMA  +  ✕ on right */}
+              <div className="flex items-center justify-between px-4 shrink-0" style={{ padding: '7px 16px', background: '#f7f7f7', borderBottom: '1px solid #ddd' }}>
+                <div className="flex items-center gap-1.5" style={{ fontSize: '11px', color: '#888' }}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#888" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                   </svg>
+                  <span style={{ color: '#bbb' }}>/</span>
+                  <span style={{ color: '#555', fontWeight: 500, letterSpacing: '.03em' }}>{activeCategory.name.toUpperCase()}</span>
+                  <span style={{ color: '#bbb' }}>/</span>
+                  <span style={{ color: '#999', letterSpacing: '.05em' }}>SCHEMA</span>
+                </div>
+                <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '16px', lineHeight: 1, padding: '2px 4px' }}>
+                  ✕
                 </button>
               </div>
 
-              <div className="flex-1 overflow-auto p-4">
-                <table className="border-collapse text-xs w-full" style={{ minWidth: '900px' }}>
-                  <thead>
-                    <tr className="bg-gray-100 text-gray-500 uppercase tracking-wide">
-                      <th className="sticky left-0 bg-gray-100 px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Field</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Description</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Type</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Source</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Unit</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Reference Flag</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Reference Value</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Data Flag</th>
-                      <th className="px-4 py-3 text-left font-semibold border border-gray-200 whitespace-nowrap">Attribute</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, i) => (
-                      <tr key={i} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                        <td className="sticky left-0 bg-inherit px-4 py-2.5 font-semibold text-gray-700 border border-gray-200 whitespace-nowrap">{row.field}</td>
-                        <td className="px-4 py-2.5 text-gray-600 border border-gray-200">{row.description}</td>
-                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.type}</td>
-                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.source}</td>
-                        <td className="px-4 py-2.5 text-gray-500 border border-gray-200 whitespace-nowrap">{row.unit || '—'}</td>
-                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.referenceFlag}</td>
-                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.referenceValue}</td>
-                        <td className="px-4 py-2.5 text-gray-400 border border-gray-200 whitespace-nowrap">{row.dataFlag}</td>
-                        <td className="px-4 py-2.5 text-gray-600 border border-gray-200 whitespace-nowrap">{row.attribute}</td>
+              {/* ② Title bar — bold title (no left icon)  +  transpose + grid icons */}
+              <div className="flex shrink-0" style={{ padding: '9px 0', background: '#fff', borderBottom: '1px solid #ddd', justifyContent: 'center' }}>
+              <div className="flex items-center" style={{ width: '85%' }}>
+                <span style={{ flex: 1, fontSize: '12px', fontWeight: 700, color: '#222', letterSpacing: '.04em' }}>
+                  {activeCategory.name.toUpperCase()} — {isProducts ? 'PRODUCTS' : 'SALES'}
+                </span>
+                {/* Transpose icon */}
+                <button
+                  onClick={() => setTransposed(t => !t)}
+                  title="Transpose table"
+                  style={{ width: 26, height: 26, border: '1px solid #ddd', borderRadius: 4, background: transposed ? '#eef2ff' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                >
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={transposed ? '#6366f1' : '#555'} strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </button>
+                {/* Grid icon (visual only) */}
+                <button
+                  title="Grid view"
+                  style={{ width: 26, height: 26, border: '1px solid #ddd', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                </button>
+              </div>
+              </div>
+
+              {/* ③ Table */}
+              <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: '85%' }}>
+                {!transposed ? (
+                  // Normal: rows = fields, columns = attributes
+                  <table style={{ borderCollapse: 'separate', borderSpacing: 0, fontSize: '11px', width: '100%', minWidth: 820 }}>
+                    <thead>
+                      <tr style={{ background: '#f0f0f0' }}>
+                        <th style={{ width: 90, padding: '6px 10px', borderRight: '1px dashed #ccc', borderBottom: '1px solid #ccc', background: '#f0f0f0' }} />
+                        {colHeaders.map((h, i) => (
+                          <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: '#666', fontWeight: 500, fontSize: 10, ...(i < colHeaders.length - 1 ? { borderRight: '1px dashed #ccc' } : {}), borderBottom: '1px solid #ccc', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, i) => (
+                        <tr key={i} style={{ background: i % 2 === 1 ? '#f8f8f8' : '#fff' }}>
+                          <td style={{ padding: '6px 10px', textAlign: 'right', fontSize: 11, fontWeight: 600, color: '#444', borderRight: '1px dashed #ccc', borderBottom: '1px dashed #e0e0e0', whiteSpace: 'nowrap' }}>{row.field}</td>
+                          {colKeys.map((k, ki) => (
+                            <td key={k} style={{ padding: '6px 10px', color: k === 'referenceFlag' || k === 'referenceValue' || k === 'dataFlag' ? '#999' : '#555', ...(ki < colKeys.length - 1 ? { borderRight: '1px dashed #ccc' } : {}), borderBottom: '1px dashed #e0e0e0', whiteSpace: k === 'description' ? 'normal' : 'nowrap' }}>
+                              {(row[k] as string) || '—'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  // Transposed: rows = attributes, columns = fields
+                  <table style={{ borderCollapse: 'separate', borderSpacing: 0, fontSize: '11px', width: '100%', minWidth: 400 }}>
+                    <thead>
+                      <tr style={{ background: '#f0f0f0' }}>
+                        <th style={{ width: 110, padding: '6px 10px', borderRight: '1px dashed #ccc', borderBottom: '1px solid #ccc', background: '#f0f0f0' }} />
+                        {rows.map((row, ri) => (
+                          <th key={row.field} style={{ padding: '6px 10px', textAlign: 'left', color: '#444', fontWeight: 600, fontSize: 11, ...(ri < rows.length - 1 ? { borderRight: '1px dashed #ccc' } : {}), borderBottom: '1px solid #ccc', whiteSpace: 'nowrap' }}>{row.field}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {colHeaders.map((h, i) => (
+                        <tr key={h} style={{ background: i % 2 === 1 ? '#f8f8f8' : '#fff' }}>
+                          <td style={{ padding: '6px 10px', textAlign: 'right', fontSize: 11, fontWeight: 600, color: '#666', borderRight: '1px dashed #ccc', borderBottom: '1px dashed #e0e0e0', whiteSpace: 'nowrap' }}>{h}</td>
+                          {rows.map((row, ri) => (
+                            <td key={row.field} style={{ padding: '6px 10px', color: i >= 4 && i <= 6 ? '#999' : '#555', ...(ri < rows.length - 1 ? { borderRight: '1px dashed #ccc' } : {}), borderBottom: '1px dashed #e0e0e0', whiteSpace: 'nowrap' }}>
+                              {(row[colKeys[i]] as string) || '—'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
               </div>
             </>
           );
