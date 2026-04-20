@@ -1,0 +1,79 @@
+<h2>Where should the new menu live?</h2>
+<p class="subtitle">The menu will show a card row on click, and a right panel on card click. Pick where it fits best.</p>
+
+<div class="cards">
+  <div class="card" data-choice="new-page" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-nav" style="font-size:11px;padding:6px 12px;">ShopFast &nbsp;|&nbsp; Chat &nbsp;|&nbsp; AI Support &nbsp;|&nbsp; Users &nbsp;|&nbsp; Cart &nbsp;|&nbsp; <strong style="color:#6366f1;">⭐ New Menu</strong></div>
+      <div style="display:flex;height:120px;margin-top:4px;gap:4px;padding:4px;">
+        <div style="flex:1;background:#f3f4f6;border-radius:6px;display:flex;flex-direction:column;gap:4px;padding:8px;">
+          <div style="background:#6366f1;color:white;border-radius:4px;padding:4px 8px;font-size:10px;">📋 Category A</div>
+          <div style="background:#e5e7eb;border-radius:4px;padding:4px 8px;font-size:10px;">📂 Category B</div>
+          <div style="background:#e5e7eb;border-radius:4px;padding:4px 8px;font-size:10px;">📁 Category C</div>
+        </div>
+        <div style="flex:3;background:#f9fafb;border-radius:6px;padding:8px;">
+          <div style="display:flex;gap:4px;margin-bottom:6px;">
+            <div style="flex:1;background:#6366f120;border:1px solid #6366f1;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 1</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 2</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 3</div>
+          </div>
+          <div style="background:#e5e7eb;border-radius:4px;height:60px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#6b7280;">Right detail panel →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — New dedicated page</h3>
+      <p>Add a new link in the top NavBar leading to a fresh page with its own sidebar menu, card row, and detail panel</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="dashboard" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-nav" style="font-size:11px;padding:6px 12px;">ShopFast &nbsp;|&nbsp; Chat &nbsp;|&nbsp; AI Support &nbsp;|&nbsp; <strong style="color:#6366f1;">Dashboard ▾</strong> &nbsp;|&nbsp; Cart</div>
+      <div style="display:flex;height:120px;margin-top:4px;gap:4px;padding:4px;">
+        <div style="flex:1;background:#f3f4f6;border-radius:6px;display:flex;flex-direction:column;gap:4px;padding:8px;">
+          <div style="background:#6366f1;color:white;border-radius:4px;padding:4px 8px;font-size:10px;">Projects</div>
+          <div style="background:#e5e7eb;border-radius:4px;padding:4px 8px;font-size:10px;"><strong>+ New Menu</strong></div>
+        </div>
+        <div style="flex:3;background:#f9fafb;border-radius:6px;padding:8px;">
+          <div style="font-size:9px;color:#6b7280;margin-bottom:4px;">New Menu — card row</div>
+          <div style="display:flex;gap:4px;margin-bottom:6px;">
+            <div style="flex:1;background:#6366f120;border:1px solid #6366f1;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 1</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 2</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Inside existing Dashboard</h3>
+      <p>Add the new menu as an additional section inside the existing DashboardPage alongside the current project cards</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="sidebar-menu" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-nav" style="font-size:11px;padding:6px 12px;">ShopFast &nbsp;|&nbsp; Chat &nbsp;|&nbsp; AI Support &nbsp;|&nbsp; Cart</div>
+      <div style="display:flex;height:120px;margin-top:4px;gap:4px;padding:4px;">
+        <div style="flex:1;background:#1a1a1a;border-radius:6px;display:flex;flex-direction:column;gap:4px;padding:8px;">
+          <div style="color:#9ca3af;font-size:9px;font-weight:600;margin-bottom:2px;">MAIN MENU</div>
+          <div style="background:#6366f1;color:white;border-radius:4px;padding:4px 8px;font-size:9px;">🏠 Overview</div>
+          <div style="color:#d1d5db;border-radius:4px;padding:4px 8px;font-size:9px;">📦 Products</div>
+          <div style="color:#d1d5db;border-radius:4px;padding:4px 8px;font-size:9px;">👥 Users</div>
+          <div style="color:#d1d5db;border-radius:4px;padding:4px 8px;font-size:9px;">🤖 AI Tools</div>
+        </div>
+        <div style="flex:3;background:#f9fafb;border-radius:6px;padding:8px;">
+          <div style="display:flex;gap:4px;">
+            <div style="flex:1;background:#6366f120;border:1px solid #6366f1;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 1</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 2</div>
+            <div style="flex:1;background:#e5e7eb;border-radius:4px;padding:6px;font-size:9px;text-align:center;">Card 3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Left sidebar app menu</h3>
+      <p>A persistent dark left sidebar with main navigation items — clicking an item shows a card row in the main area</p>
+    </div>
+  </div>
+</div>

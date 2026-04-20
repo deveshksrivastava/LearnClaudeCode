@@ -1,0 +1,160 @@
+<h2>3 Approaches — Pick Your Preferred One</h2>
+<p class="subtitle">Click to select the approach you prefer</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div style="display:flex;height:180px;">
+        <!-- Sidebar -->
+        <div style="width:110px;background:#fff;border-right:1px solid #e5e7eb;padding:8px 6px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+          <div style="font-size:8px;color:#9ca3af;font-weight:700;padding:0 6px 3px;">MAIN</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;background:#f3f4f6;color:#6b7280;font-size:9px;">🏠 Dashboard</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;background:#eef2ff;color:#6366f1;font-size:9px;font-weight:700;">🗂️ Categories</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">✅ Tasks</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">💬 Messages</div>
+          <div style="margin-top:auto;border-top:1px solid #e5e7eb;padding-top:6px;">
+            <div style="font-size:8px;color:#9ca3af;font-weight:700;padding:0 6px 3px;">SETTINGS</div>
+            <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">⚙️ Settings</div>
+          </div>
+        </div>
+        <!-- Main: card row -->
+        <div style="flex:1;background:#f9fafb;padding:10px;border-right:1px solid #e5e7eb;overflow-x:auto;">
+          <div style="font-size:9px;font-weight:700;color:#374151;margin-bottom:8px;">Categories</div>
+          <div style="display:flex;gap:6px;flex-wrap:nowrap;">
+            <div style="width:80px;background:#fff;border:2px solid #6366f1;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">📦</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Electronics</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">👗</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Fashion</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">🏠</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Home</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:7px;color:#6366f1;background:#eef2ff;display:inline-block;padding:2px 6px;border-radius:4px;">New route: /categories</div>
+        </div>
+        <!-- Right panel -->
+        <div style="width:100px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+          <div style="font-size:9px;font-weight:700;color:#111;">Electronics</div>
+          <div style="font-size:7px;color:#6b7280;line-height:1.4;">Detail panel content here</div>
+          <div style="background:#f9fafb;border-radius:4px;padding:4px;">
+            <div style="font-size:7px;color:#9ca3af;">Items</div>
+            <div style="font-size:8px;font-weight:600;">24</div>
+          </div>
+          <div style="background:#f9fafb;border-radius:4px;padding:4px;">
+            <div style="font-size:7px;color:#9ca3af;">Status</div>
+            <div style="font-size:8px;font-weight:600;color:#10b981;">Active</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — New CategoriesPage at /categories ⭐ Recommended</h3>
+      <p>Separate page with its own route. "Categories" added to Dashboard sidebar links to /categories. Clean, isolated, mirrors how ProjectDetailPage already works.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div style="display:flex;height:180px;">
+        <!-- Sidebar -->
+        <div style="width:110px;background:#fff;border-right:1px solid #e5e7eb;padding:8px 6px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+          <div style="font-size:8px;color:#9ca3af;font-weight:700;padding:0 6px 3px;">MAIN</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;background:#f3f4f6;color:#6b7280;font-size:9px;">🏠 Dashboard</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;background:#eef2ff;color:#6366f1;font-size:9px;font-weight:700;">🗂️ Categories</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">✅ Tasks</div>
+          <div style="margin-top:auto;border-top:1px solid #e5e7eb;padding-top:6px;">
+            <div style="font-size:7px;color:#f59e0b;background:#fef3c7;padding:3px 5px;border-radius:4px;text-align:center;">State toggle inside DashboardPage</div>
+          </div>
+        </div>
+        <!-- Main: shows categories (toggled) -->
+        <div style="flex:1;background:#f9fafb;padding:10px;overflow-x:auto;">
+          <div style="font-size:8px;color:#6b7280;margin-bottom:6px;">DashboardPage — view: <strong style="color:#6366f1;">categories</strong></div>
+          <div style="display:flex;gap:6px;flex-wrap:nowrap;margin-bottom:6px;">
+            <div style="width:80px;background:#fff;border:2px solid #6366f1;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">📦</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Electronics</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">👗</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Fashion</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">🏠</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Home</div>
+            </div>
+          </div>
+          <!-- Right panel inline -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;margin-top:4px;">
+            <div style="font-size:8px;font-weight:700;color:#111;margin-bottom:4px;">Electronics — detail</div>
+            <div style="font-size:7px;color:#6b7280;">No separate route. URL stays /dashboard. State lives in DashboardPage.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — State toggle inside DashboardPage</h3>
+      <p>No new route. DashboardPage gets a state variable that switches between "dashboard view" and "categories view". URL stays /dashboard throughout.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div style="display:flex;height:180px;">
+        <!-- Shared sidebar indicator -->
+        <div style="width:110px;background:#fff;border-right:1px solid #e5e7eb;padding:8px 6px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+          <div style="font-size:7px;background:#d1fae5;color:#065f46;padding:2px 5px;border-radius:3px;text-align:center;margin-bottom:4px;">Shared &lt;AppSidebar&gt;</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">🏠 Dashboard</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;background:#eef2ff;color:#6366f1;font-size:9px;font-weight:700;">🗂️ Categories</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">✅ Tasks</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:5px;color:#6b7280;font-size:9px;">💬 Messages</div>
+          <div style="margin-top:auto;">
+            <div style="font-size:7px;color:#6b7280;text-align:center;padding:2px;">Used by Dashboard, Categories, Detail pages…</div>
+          </div>
+        </div>
+        <!-- Main content -->
+        <div style="flex:1;background:#f9fafb;padding:10px;border-right:1px solid #e5e7eb;overflow-x:auto;">
+          <div style="font-size:9px;font-weight:700;color:#374151;margin-bottom:8px;">Categories</div>
+          <div style="display:flex;gap:6px;flex-wrap:nowrap;">
+            <div style="width:80px;background:#fff;border:2px solid #6366f1;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">📦</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Electronics</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">👗</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Fashion</div>
+            </div>
+            <div style="width:80px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px;flex-shrink:0;">
+              <div style="font-size:12px;">🏠</div>
+              <div style="font-size:8px;font-weight:600;color:#111;">Home</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:7px;color:#10b981;background:#d1fae5;display:inline-block;padding:2px 6px;border-radius:4px;">New route: /categories + sidebar refactored</div>
+        </div>
+        <!-- Right panel -->
+        <div style="width:90px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          <div style="font-size:9px;font-weight:700;color:#111;">Electronics</div>
+          <div style="font-size:7px;color:#6b7280;">Detail panel</div>
+          <div style="background:#f9fafb;border-radius:4px;padding:4px;">
+            <div style="font-size:7px;color:#9ca3af;">Items: 24</div>
+          </div>
+          <div style="font-size:7px;color:#6b7280;margin-top:auto;">AppSidebar reused everywhere</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Shared sidebar component + new page</h3>
+      <p>Extracts the sidebar into a reusable &lt;AppSidebar&gt; component shared across pages, then builds CategoriesPage using it. Best architecture but involves refactoring existing files.</p>
+    </div>
+  </div>
+
+</div>
+
+<p style="font-size:12px;color:#6b7280;margin-top:16px;">Click an option above or reply in terminal with A, B, or C.</p>
