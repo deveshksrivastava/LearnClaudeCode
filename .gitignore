@@ -26,3 +26,6 @@ llm-chatbot-backend/chroma_data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Test results / screenshots
+test-results/
